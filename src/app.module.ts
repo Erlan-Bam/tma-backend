@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { SharedModule } from './shared/shared.module';
-import config from './config';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import Joi from 'joi';
