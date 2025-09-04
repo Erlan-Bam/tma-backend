@@ -19,6 +19,7 @@ import Joi from 'joi';
         DATABASE_URL: Joi.string().uri().required(),
         FRONTEND_URL: Joi.string().uri().required(),
         JWT_ACCESS_SECRET: Joi.string().min(8).required(),
+        TELEGRAM_BOT_TOKEN: Joi.string().required(),
       }),
       validationOptions: { allowUnknown: true, abortEarly: true },
     }),
