@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { SharedModule } from './shared/shared.module';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import Joi from 'joi';
+import * as Joi from 'joi';
 
 @Module({
   imports: [
