@@ -20,6 +20,14 @@ import * as Joi from 'joi';
         FRONTEND_URL: Joi.string().uri().required(),
         JWT_ACCESS_SECRET: Joi.string().min(8).required(),
         TELEGRAM_BOT_TOKEN: Joi.string().required(),
+        ZEPHYR_SECRET_KEY: Joi.string().required(),
+        ZEPHYR_BASE_URL: Joi.string()
+          .uri()
+          .valid(
+            'https://dev-sandbox-v423.zephyrcards.com',
+            'https://dev-docs-v2821.zephyrcards.com',
+          )
+          .required(),
       }),
       validationOptions: { allowUnknown: true, abortEarly: true },
     }),

@@ -2,6 +2,7 @@
 /dist
 /node_modules
 /build
+/zephyr.pem
 
 # Logs
 logs
