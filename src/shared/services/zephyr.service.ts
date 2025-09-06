@@ -1,12 +1,17 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as crypto from 'crypto';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
+import {
+  constants,
+  createPrivateKey,
+  privateEncrypt,
+  randomUUID,
+} from 'crypto';
 
 @Injectable()
-export class ZephyrService implements OnModuleInit {
+export class ZephyrService {
   private readonly logger = new Logger(ZephyrService.name);
   private readonly secretKey: string;
   private readonly licenseKey: string;
@@ -27,21 +32,16 @@ export class ZephyrService implements OnModuleInit {
     });
   }
 
-  async onModuleInit() {
-    await this.verification();
-  }
+  async createAccount() {}
 
   async verification() {
     try {
-      // Try without childUserId first
       const token = await this.getToken();
       const response = await this.zephyr.get(
         '/open-api/authorization/verification',
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'X-LICENSE': this.licenseKey,
-            'Content-Type': 'application/json',
           },
         },
       );
@@ -65,10 +65,47 @@ export class ZephyrService implements OnModuleInit {
     }
   }
 
+  async createChildAccount(email: string, password: string) {
+    try {
+      const [token, requestId] = await Promise.all([
+        this.getToken(),
+        this.getRequestId(),
+      ]);
+
+      const response = await this.zephyr.post(
+        '/open-api/register/childUser',
+        { email: email, password: password },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'X-REQUEST-ID': requestId,
+          },
+        },
+      );
+
+      const data = response.data.data;
+
+      if (response.data.code === 200) {
+        return {
+          childUserId: data.userId,
+        };
+      } else {
+        this.logger.debug(
+          `Creating child account resulted in operation not successful, response: ${JSON.stringify(response.data)}`,
+        );
+        throw new Error('Operation not successful');
+      }
+    } catch (error) {
+      this.logger.error(
+        'Error from zephyr when creating child account' + error,
+      );
+      throw error;
+    }
+  }
+
   private async getToken(childUserId?: string | undefined): Promise<string> {
     const now = Date.now();
 
-    // Create payload object with same order as Java example
     const payload: any = {};
     payload.secret = this.secretKey;
     if (childUserId) {
@@ -76,75 +113,23 @@ export class ZephyrService implements OnModuleInit {
     }
     payload.timestamp = now;
 
-    this.logger.debug(`Payload for signing: ${JSON.stringify(payload)}`);
-
-    // Use compact JSON format without spaces (like in Java example)
     const signStr = JSON.stringify(payload);
-    this.logger.debug(`String to encrypt: ${signStr}`);
-    this.logger.debug(`String length: ${signStr.length}`);
+    const pem = await readFile(join(process.cwd(), 'zephyr.pem'), 'utf-8');
+    const apiClientKey = createPrivateKey({ key: pem });
 
-    const filePath = path.join(process.cwd(), 'zephyr.pem');
-    const privateKeyPem = fs.readFileSync(filePath, 'utf8');
+    const encrypted = privateEncrypt(
+      {
+        key: apiClientKey,
+        padding: constants.RSA_PKCS1_PADDING,
+      },
+      Buffer.from(signStr, 'utf-8'),
+    );
 
-    try {
-      // Approach 1: Try OAEP padding instead of PKCS1
-      this.logger.debug('Trying OAEP padding...');
-      const encrypted = crypto.privateEncrypt(
-        {
-          key: privateKeyPem,
-          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-          oaepHash: 'sha256',
-        },
-        Buffer.from(signStr, 'utf8'),
-      );
+    return encrypted.toString('base64');
+  }
 
-      const token = encrypted.toString('base64');
-      this.logger.debug(`OAEP encrypted token length: ${token.length}`);
-      return token;
-    } catch (error) {
-      this.logger.error(`OAEP encryption error: ${error.message}`);
-
-      // Approach 2: Try signature with RSA-SHA256
-      try {
-        this.logger.debug('Trying RSA-SHA256 signature...');
-        const signature = crypto.sign('sha256', Buffer.from(signStr, 'utf8'), {
-          key: privateKeyPem,
-          padding: crypto.constants.RSA_PKCS1_PADDING,
-        });
-
-        const token = signature.toString('base64');
-        this.logger.debug(`SHA256 signature token length: ${token.length}`);
-        return token;
-      } catch (signError) {
-        this.logger.error(`Signature error: ${signError.message}`);
-
-        // Approach 3: Try to split data and encrypt in chunks
-        try {
-          this.logger.debug('Trying chunked encryption...');
-          const maxChunkSize = 190; // Safe size for RSA-2048 with PKCS1 padding
-          const chunks = [];
-
-          for (let i = 0; i < signStr.length; i += maxChunkSize) {
-            const chunk = signStr.slice(i, i + maxChunkSize);
-            const encryptedChunk = crypto.privateEncrypt(
-              {
-                key: privateKeyPem,
-                padding: crypto.constants.RSA_PKCS1_PADDING,
-              },
-              Buffer.from(chunk, 'utf8'),
-            );
-            chunks.push(encryptedChunk);
-          }
-
-          const concatenated = Buffer.concat(chunks);
-          const token = concatenated.toString('base64');
-          this.logger.debug(`Chunked token length: ${token.length}`);
-          return token;
-        } catch (chunkError) {
-          this.logger.error(`Chunked encryption error: ${chunkError.message}`);
-          throw chunkError;
-        }
-      }
-    }
+  async getRequestId() {
+    const randomId = randomUUID();
+    return `${Date.now()}-${randomId}`;
   }
 }

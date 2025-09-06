@@ -12,3 +12,19 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+enum Role {
+  USER
+  ADMIN
+}
+
+model Account {
+  id                 String   @id @default(uuid())
+  role               Role     @default(USER)
+  telegramId         Int      @unique
+  email              String   @unique
+  password           String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  childUserId        String   @unique
+  isBanned           Boolean  @default(false)
+}

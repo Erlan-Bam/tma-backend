@@ -3,6 +3,7 @@ import { SharedModule } from './shared/shared.module';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AccountModule } from './account/account.module';
+import { AuthModule } from './auth/auth.module';
 import * as Joi from 'joi';
 
 @Module({
@@ -20,6 +21,7 @@ import * as Joi from 'joi';
         DATABASE_URL: Joi.string().uri().required(),
         FRONTEND_URL: Joi.string().uri().required(),
         JWT_ACCESS_SECRET: Joi.string().min(8).required(),
+        JWT_REFRESH_SECRET: Joi.string().min(8).required(),
         TELEGRAM_BOT_TOKEN: Joi.string().required(),
         ZEPHYR_SECRET_KEY: Joi.string().required(),
         ZEPHYR_BASE_URL: Joi.string()
@@ -40,6 +42,7 @@ import * as Joi from 'joi';
     ]),
     SharedModule,
     AccountModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
