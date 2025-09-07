@@ -61,8 +61,6 @@ export class AuthService {
       });
     } catch (error) {
       this.logger.error('Error with prisma database in register: ' + error);
-
-      //TO DO delete zephyr user
       throw new HttpException('Failed to persist account', 500);
     }
 

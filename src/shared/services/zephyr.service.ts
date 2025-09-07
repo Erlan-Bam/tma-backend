@@ -8,6 +8,7 @@ import {
   createPrivateKey,
   privateEncrypt,
   randomUUID,
+  createSign,
 } from 'crypto';
 
 @Injectable()
@@ -32,7 +33,45 @@ export class ZephyrService {
     });
   }
 
-  async createAccount() {}
+  async getChildAccount(childUserId: string) {
+    try {
+      const [token, requestId] = await Promise.all([
+        this.getToken(),
+        this.getRequestId(),
+      ]);
+
+      this.logger.debug('TOKEN: ' + token);
+
+      const response = await this.zephyr.get(
+        `/open-api/user/child/${childUserId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'X-REQUEST-ID': requestId,
+          },
+        },
+      );
+
+      const data = response.data.data;
+
+      if (response.data.code === 200) {
+        return {
+          childUserId: data.userId,
+          topupMin: data.topupMin,
+          topupMax: data.topupMax,
+          balance: data.balance,
+        };
+      } else {
+        this.logger.debug(
+          `Getting child account resulted in operation not successful, response: ${JSON.stringify(response.data)}`,
+        );
+        throw new Error('Operation not successful');
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when getting child account' + error);
+      throw error;
+    }
+  }
 
   async verification() {
     try {
@@ -104,22 +143,21 @@ export class ZephyrService {
   }
 
   private async getToken(childUserId?: string | undefined): Promise<string> {
-    const now = Date.now();
+    const payload: Record<string, any> = {
+      secret: this.secretKey,
+      timestamp: Date.now(),
+    };
+    if (childUserId) payload.childUserId = childUserId;
 
-    const payload: any = {};
-    payload.secret = this.secretKey;
-    if (childUserId) {
-      payload.childUserId = childUserId;
-    }
-    payload.timestamp = now;
+    this.logger.debug('Payload: ' + JSON.stringify(payload));
 
     const signStr = JSON.stringify(payload);
     const pem = await readFile(join(process.cwd(), 'zephyr.pem'), 'utf-8');
-    const apiClientKey = createPrivateKey({ key: pem });
+    const key = createPrivateKey(pem);
 
     const encrypted = privateEncrypt(
       {
-        key: apiClientKey,
+        key: key,
         padding: constants.RSA_PKCS1_PADDING,
       },
       Buffer.from(signStr, 'utf-8'),
