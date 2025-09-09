@@ -11,10 +11,10 @@ export class AccountService {
     private zephyr: ZephyrService,
     private prisma: PrismaService,
   ) {}
-  async getAccountByTelegramId(id: number) {
+  async getAccountById(id: string) {
     try {
       const account = await this.prisma.account.findUnique({
-        where: { telegramId: id },
+        where: { id: id },
       });
 
       if (!account) {
@@ -30,10 +30,10 @@ export class AccountService {
     }
   }
 
-  async getTopupTransactions(id: number) {
+  async getTopupTransactions(id: string) {
     try {
       const account = await this.prisma.account.findUnique({
-        where: { telegramId: id },
+        where: { id: id },
       });
 
       if (!account) {
@@ -51,10 +51,10 @@ export class AccountService {
     }
   }
 
-  async getTopupApplications(id: number, data: GetTopupApplications) {
+  async getTopupApplications(id: string, data: GetTopupApplications) {
     try {
       const account = await this.prisma.account.findUnique({
-        where: { telegramId: id },
+        where: { id: id },
       });
 
       if (!account) {
@@ -70,10 +70,10 @@ export class AccountService {
     }
   }
 
-  async topupWallet(data: TopupWalletDto) {
+  async topupWallet(id: string, data: TopupWalletDto) {
     try {
       const account = await this.prisma.account.findUnique({
-        where: { telegramId: data.telegramId },
+        where: { id: id },
       });
 
       if (!account) {

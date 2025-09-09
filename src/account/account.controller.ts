@@ -1,40 +1,37 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseIntPipe,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { TopupWalletDto } from './dto/topup-wallet.dto';
 import { GetTopupApplications } from './dto/get-topup-applications.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { User } from 'src/shared/decorator/user.decorator';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('account')
+@ApiBearerAuth('JWT')
+@UseGuards(AuthGuard('jwt'))
 export class AccountController {
   constructor(private accountService: AccountService) {}
 
   @Post('topup/wallet')
-  async topupWallet(@Body() data: TopupWalletDto) {
-    return await this.accountService.topupWallet(data);
+  async topupWallet(@Body() data: TopupWalletDto, @User('id') userId: string) {
+    return await this.accountService.topupWallet(userId, data);
   }
 
-  @Get('topup/applications/:id')
+  @Get('')
+  async getAccountById(@User('id') userId: string) {
+    return await this.accountService.getAccountById(userId);
+  }
+
+  @Get('topup/applications')
   async getTopupApplications(
-    @Param('id', ParseIntPipe) id: number,
+    @User('id') userId: string,
     @Query() data: GetTopupApplications,
   ) {
-    return await this.accountService.getTopupApplications(id, data);
+    return await this.accountService.getTopupApplications(userId, data);
   }
 
-  @Get('topup/transactions/:id')
-  async getTopupTransactions(@Param('id', ParseIntPipe) id: number) {
-    return await this.accountService.getTopupTransactions(id);
-  }
-
-  @Get('telegram/:id')
-  async getAccountByTelegramId(@Param('id', ParseIntPipe) id: number) {
-    return await this.accountService.getAccountByTelegramId(id);
+  @Get('topup/transactions')
+  async getTopupTransactions(@User('id') userId: string) {
+    return await this.accountService.getTopupTransactions(userId);
   }
 }

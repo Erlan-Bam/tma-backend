@@ -10,6 +10,7 @@ import {
   randomUUID,
 } from 'crypto';
 import { GetTopupApplications } from 'src/account/dto/get-topup-applications.dto';
+import { APPLICATION_STATUS, USED_SCENES } from '../types/zephyr.types';
 
 @Injectable()
 export class ZephyrService {
@@ -51,7 +52,7 @@ export class ZephyrService {
         };
       } else {
         this.logger.debug(
-          `Getting child account resulted in operation not successful, response: ${JSON.stringify(response.data)}`,
+          `Getting child account resulted in operation not successful, response: ${JSON.stringify(response)}`,
         );
         throw new Error('Operation not successful');
       }
@@ -69,8 +70,6 @@ export class ZephyrService {
         endpoint: `/open-api/child/wallet/transactions`,
       });
 
-      this.logger.debug(JSON.stringify(response));
-
       const data = response.rows;
 
       if (response.code === 200) {
@@ -81,7 +80,7 @@ export class ZephyrService {
         };
       } else {
         this.logger.debug(
-          `Getting child account resulted in operation not successful, response: ${JSON.stringify(response.data)}`,
+          `Getting topup transactions resulted in operation not successful for childUserId=${childUserId}, response: ${JSON.stringify(response)}`,
         );
         throw new Error('Operation not successful');
       }
@@ -97,27 +96,76 @@ export class ZephyrService {
         childUserId: childUserId,
         method: 'GET',
         endpoint: `/open-api/child/wallet/topup/application`,
-        params: query,
+        params: {
+          pageNum: query.page,
+          pageSize: query.limit,
+          status: query.status,
+        },
       });
-
-      this.logger.debug(JSON.stringify(response));
 
       const data = response.rows;
 
       if (response.code === 200) {
         return {
           applications: data.map((a: any) => ({
-            ...a,
+            amount: a.applyAmount,
+            currency: a.applyCurrency,
+            status: APPLICATION_STATUS[a.status],
+            reason:
+              a.status !== 0
+                ? a.status === 1
+                  ? a.payVoucher
+                  : a.remark
+                : null,
+            createdAt: a.createTime,
+            payedAt: a.payTime,
           })),
         };
       } else {
         this.logger.debug(
-          `Getting child account resulted in operation not successful, response: ${JSON.stringify(response.data)}`,
+          `Getting topup applications resulted in operation not successful for childUserId=${childUserId}, response: ${JSON.stringify(response)}`,
         );
         throw new Error('Operation not successful');
       }
     } catch (error) {
       this.logger.error('Error from zephyr when getting child account' + error);
+      throw error;
+    }
+  }
+
+  async getProductList(childUserId: string) {
+    try {
+      const response = await this.sendRequest({
+        childUserId: childUserId,
+        method: 'GET',
+        endpoint: `/open-api/card/products`,
+      });
+
+      const data = response.data;
+
+      if (response.code === 200) {
+        return {
+          cards: data.map((c: any) => ({
+            organization: c.organization,
+            cardArea: c.cardArea,
+            cardBinId: c.cardBinId,
+            currency: c.currency,
+            minOpenAmount: c.minOpenAmount,
+            maxOpenAmount: c.maxOpenAmount,
+            usedScenes: c.usedScenes,
+          })),
+          usedSceneDescription: USED_SCENES,
+        };
+      } else {
+        this.logger.debug(
+          `Getting card product list resulted in operation not successful, response: ${JSON.stringify(response)}`,
+        );
+        throw new Error('Operation not successful');
+      }
+    } catch (error) {
+      this.logger.error(
+        'Error from zephyr when getting card product list' + error,
+      );
       throw error;
     }
   }
@@ -195,7 +243,7 @@ export class ZephyrService {
         };
       } else {
         this.logger.debug(
-          `Creating child account resulted in operation not successful, response: ${JSON.stringify(response.data)}`,
+          `Creating child account resulted in operation not successful, response: ${JSON.stringify(response)}`,
         );
         throw new Error('Operation not successful');
       }

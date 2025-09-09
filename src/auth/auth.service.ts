@@ -115,7 +115,7 @@ export class AuthService {
       },
       {
         secret: this.JWT_ACCESS_SECRET,
-        expiresIn: '5m',
+        expiresIn: '1d',
       },
     );
   }
