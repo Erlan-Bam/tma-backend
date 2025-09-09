@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import {
@@ -8,8 +8,8 @@ import {
   createPrivateKey,
   privateEncrypt,
   randomUUID,
-  createSign,
 } from 'crypto';
+import { GetTopupApplications } from 'src/account/dto/get-topup-applications.dto';
 
 @Injectable()
 export class ZephyrService {
@@ -35,26 +35,14 @@ export class ZephyrService {
 
   async getChildAccount(childUserId: string) {
     try {
-      const [token, requestId] = await Promise.all([
-        this.getToken(),
-        this.getRequestId(),
-      ]);
+      const response = await this.sendRequest({
+        method: 'GET',
+        endpoint: `/open-api/user/child/${childUserId}`,
+      });
 
-      this.logger.debug('TOKEN: ' + token);
+      const data = response.data;
 
-      const response = await this.zephyr.get(
-        `/open-api/user/child/${childUserId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'X-REQUEST-ID': requestId,
-          },
-        },
-      );
-
-      const data = response.data.data;
-
-      if (response.data.code === 200) {
+      if (response.code === 200) {
         return {
           childUserId: data.userId,
           topupMin: data.topupMin,
@@ -70,6 +58,93 @@ export class ZephyrService {
     } catch (error) {
       this.logger.error('Error from zephyr when getting child account' + error);
       throw error;
+    }
+  }
+
+  async getTopupTransactions(childUserId: string) {
+    try {
+      const response = await this.sendRequest({
+        childUserId: childUserId,
+        method: 'GET',
+        endpoint: `/open-api/child/wallet/transactions`,
+      });
+
+      this.logger.debug(JSON.stringify(response));
+
+      const data = response.rows;
+
+      if (response.code === 200) {
+        return {
+          transactions: data.map((t: any) => ({
+            ...t,
+          })),
+        };
+      } else {
+        this.logger.debug(
+          `Getting child account resulted in operation not successful, response: ${JSON.stringify(response.data)}`,
+        );
+        throw new Error('Operation not successful');
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when getting child account' + error);
+      throw error;
+    }
+  }
+
+  async getTopupApplications(childUserId: string, query: GetTopupApplications) {
+    try {
+      const response = await this.sendRequest({
+        childUserId: childUserId,
+        method: 'GET',
+        endpoint: `/open-api/child/wallet/topup/application`,
+        params: query,
+      });
+
+      this.logger.debug(JSON.stringify(response));
+
+      const data = response.rows;
+
+      if (response.code === 200) {
+        return {
+          applications: data.map((a: any) => ({
+            ...a,
+          })),
+        };
+      } else {
+        this.logger.debug(
+          `Getting child account resulted in operation not successful, response: ${JSON.stringify(response.data)}`,
+        );
+        throw new Error('Operation not successful');
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when getting child account' + error);
+      throw error;
+    }
+  }
+
+  async topupWallet(childUserId: string, amount: number) {
+    try {
+      const response = await this.sendRequest({
+        childUserId: childUserId,
+        method: 'POST',
+        endpoint: '/open-api/child/wallet/topup/application',
+        body: {
+          amount: amount,
+        },
+      });
+
+      if (response.code === 200) {
+        return {
+          status: 'success',
+          message: 'Successfully created topup application',
+        };
+      } else {
+        return { status: 'error', message: response.msg };
+      }
+    } catch (error) {
+      this.logger.error(
+        'Error from zephyr when topup wallet application: ' + error,
+      );
     }
   }
 
@@ -106,25 +181,15 @@ export class ZephyrService {
 
   async createChildAccount(email: string, password: string) {
     try {
-      const [token, requestId] = await Promise.all([
-        this.getToken(),
-        this.getRequestId(),
-      ]);
+      const response = await this.sendRequest({
+        method: 'POST',
+        endpoint: '/open-api/register/childUser',
+        body: { email: email, password: password },
+      });
 
-      const response = await this.zephyr.post(
-        '/open-api/register/childUser',
-        { email: email, password: password },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'X-REQUEST-ID': requestId,
-          },
-        },
-      );
+      const data = response.data;
 
-      const data = response.data.data;
-
-      if (response.data.code === 200) {
+      if (response.code === 200) {
         return {
           childUserId: data.userId,
         };
@@ -136,9 +201,61 @@ export class ZephyrService {
       }
     } catch (error) {
       this.logger.error(
-        'Error from zephyr when creating child account' + error,
+        'Error from zephyr when creating child account: ' + error,
       );
       throw error;
+    }
+  }
+
+  private async sendRequest({
+    childUserId,
+    method,
+    endpoint,
+    body,
+    params,
+    headers,
+  }: {
+    childUserId?: string;
+    method: 'POST' | 'GET' | 'DELETE' | 'PUT';
+    endpoint: string;
+    body?: Record<string, any>;
+    params?: Record<string, any>;
+    headers?: Record<string, string>;
+  }) {
+    const [token, requestId] = await Promise.all([
+      this.getToken(childUserId),
+      this.getRequestId(),
+    ]);
+
+    this.logger.debug(`TOKEN: ${token}, REQUEST-ID: ${requestId}`);
+    const config: AxiosRequestConfig = {
+      headers: {
+        ...headers,
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+        'X-REQUEST-ID': requestId,
+      },
+      params: params,
+    };
+    switch (method) {
+      case 'GET': {
+        const response = await this.zephyr.get(endpoint, config);
+        return response.data;
+      }
+      case 'POST': {
+        const response = await this.zephyr.post(endpoint, body, config);
+        return response.data;
+      }
+      case 'PUT': {
+        const response = await this.zephyr.put(endpoint, body, config);
+        return response.data;
+      }
+      case 'DELETE': {
+        const response = await this.zephyr.delete(endpoint, config);
+        return response.data;
+      }
+      default:
+        throw new Error(`Unsupported method: ${method}`);
     }
   }
 
@@ -153,8 +270,7 @@ export class ZephyrService {
 
     const signStr = JSON.stringify(payload);
     const pem = await readFile(join(process.cwd(), 'zephyr.pem'), 'utf-8');
-    const key = createPrivateKey(pem);
-
+    const key = createPrivateKey({ key: pem });
     const encrypted = privateEncrypt(
       {
         key: key,

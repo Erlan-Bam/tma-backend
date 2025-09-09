@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AccountModule } from './account/account.module';
 import { AuthModule } from './auth/auth.module';
+import { CardModule } from './card/card.module';
 import * as Joi from 'joi';
 
 @Module({
@@ -43,6 +44,7 @@ import * as Joi from 'joi';
     SharedModule,
     AccountModule,
     AuthModule,
+    CardModule,
   ],
 })
 export class AppModule {}
