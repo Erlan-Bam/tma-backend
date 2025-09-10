@@ -11,6 +11,7 @@ import {
 } from 'crypto';
 import { GetTopupApplications } from 'src/account/dto/get-topup-applications.dto';
 import { APPLICATION_STATUS, USED_SCENES } from '../types/zephyr.types';
+import { CreateCardDto } from 'src/card/dto/create-card.dto';
 
 @Injectable()
 export class ZephyrService {
@@ -193,6 +194,49 @@ export class ZephyrService {
       this.logger.error(
         'Error from zephyr when topup wallet application: ' + error,
       );
+    }
+  }
+
+  async createCard(childUserId: string, body: CreateCardDto) {
+    try {
+      this.logger.debug(
+        JSON.stringify({
+          childUserId: childUserId,
+          method: 'POST',
+          endpoint: '/open-api/child/card/order/application',
+          body: {
+            ...body,
+            topupAmount: 0,
+          },
+        }),
+      );
+      const response = await this.sendRequest({
+        childUserId: childUserId,
+        method: 'POST',
+        endpoint: '/open-api/child/card/order/application',
+        body: {
+          ...body,
+          topupAmount: 0,
+        },
+      });
+
+      if (response.code === 200) {
+        return {
+          status: 'success',
+          message: 'Successfully created card order application',
+          data: response.data,
+        };
+      } else {
+        this.logger.debug(
+          `Creating card order application resulted in operation not successful, response: ${JSON.stringify(response)}`,
+        );
+        return { status: 'error', message: response.msg };
+      }
+    } catch (error) {
+      this.logger.error(
+        'Error from zephyr when creating card order application: ' + error,
+      );
+      throw error;
     }
   }
 
