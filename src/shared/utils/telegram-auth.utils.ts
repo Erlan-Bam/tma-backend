@@ -25,7 +25,7 @@ export class TelegramAuthUtils {
     try {
       const urlParams = new URLSearchParams(initData);
       const hash = urlParams.get('hash');
-      
+
       if (!hash) {
         return false;
       }
@@ -87,6 +87,6 @@ export class TelegramAuthUtils {
    */
   static isDataFresh(authDate: number, maxAgeSeconds: number = 86400): boolean {
     const now = Math.floor(Date.now() / 1000);
-    return (now - authDate) <= maxAgeSeconds;
+    return now - authDate <= maxAgeSeconds;
   }
 }

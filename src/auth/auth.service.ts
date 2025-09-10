@@ -7,7 +7,10 @@ import { TmaAuthDto } from './dto/tma-auth.dto';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
-import { TelegramAuthUtils, ParsedInitData } from 'src/shared/utils/telegram-auth.utils';
+import {
+  TelegramAuthUtils,
+  ParsedInitData,
+} from 'src/shared/utils/telegram-auth.utils';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -154,14 +157,19 @@ export class AuthService {
 
   async tmaAuth(data: TmaAuthDto) {
     // Валидируем Telegram init data
-    const isValid = TelegramAuthUtils.validateInitData(data.initData, this.BOT_TOKEN);
+    const isValid = TelegramAuthUtils.validateInitData(
+      data.initData,
+      this.BOT_TOKEN,
+    );
     if (!isValid) {
       throw new HttpException('Invalid Telegram data', 400);
     }
 
     // Парсим данные
-    const parsedData: ParsedInitData = TelegramAuthUtils.parseInitData(data.initData);
-    
+    const parsedData: ParsedInitData = TelegramAuthUtils.parseInitData(
+      data.initData,
+    );
+
     if (!parsedData.user || !parsedData.auth_date) {
       throw new HttpException('Invalid Telegram user data', 400);
     }
@@ -172,7 +180,7 @@ export class AuthService {
     }
 
     const telegramUser = parsedData.user;
-    
+
     // Ищем существующего пользователя
     let account = await this.prisma.account.findUnique({
       where: { telegramId: telegramUser.id },
@@ -184,7 +192,7 @@ export class AuthService {
         // Создаем child account с временным email
         const tempEmail = `telegram_${telegramUser.id}@temp.local`;
         const tempPassword = crypto.randomBytes(32).toString('hex');
-        
+
         const childAccount = await this.zephyrService.createChildAccount(
           tempEmail,
           tempPassword,
