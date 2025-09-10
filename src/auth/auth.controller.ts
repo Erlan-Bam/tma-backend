@@ -1,9 +1,19 @@
-import { Body, Controller, Logger, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Logger,
+  Post,
+  Get,
+  UseGuards,
+  HttpException,
+} from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { TmaAuthDto } from './dto/tma-auth.dto';
 import { ApiTags, ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
+import { User } from 'src/shared/decorator/user.decorator';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -60,5 +70,43 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'User authenticated via TMA' })
   async tmaAuth(@Body() data: TmaAuthDto) {
     return await this.authService.tmaAuth(data);
+  }
+
+  @Get('validate')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Validate current token and get user info' })
+  @ApiResponse({
+    status: 200,
+    description: 'Token is valid, user info returned',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Token is invalid or user not found',
+  })
+  async validateToken(@User() user: any) {
+    // Дополнительная проверка пользователя в базе данных
+    const validUser = await this.authService.validateTokenAndUser(user.id);
+    if (!validUser) {
+      throw new HttpException('User not found or banned', 401);
+    }
+
+    return {
+      valid: true,
+      user: {
+        id: validUser.id,
+        telegramId: validUser.telegramId,
+        email: validUser.email,
+        role: validUser.role,
+        createdAt: validUser.createdAt,
+      },
+    };
+  }
+
+  @Post('refresh-v2')
+  @ApiOperation({ summary: 'Refresh both access and refresh tokens' })
+  @ApiBody({ schema: { properties: { refresh_token: { type: 'string' } } } })
+  @ApiResponse({ status: 200, description: 'Tokens refreshed successfully' })
+  async refreshV2(@Body() body: { refresh_token: string }) {
+    return await this.authService.refreshAccessTokenV2(body.refresh_token);
   }
 }

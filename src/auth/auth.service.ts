@@ -143,14 +143,15 @@ export class AuthService {
       const payload = await this.jwtService.verifyAsync(refreshToken, {
         secret: this.JWT_REFRESH_SECRET,
       });
-      const user = await this.prisma.account.findUnique({
-        where: { email: payload.email },
-      });
+
+      const user = await this.validateTokenAndUser(payload.id);
       if (!user) {
-        throw new HttpException('Invalid refresh token', 401);
+        throw new HttpException('User not found or banned', 401);
       }
+
       return this.generateAccessToken(user);
     } catch (error) {
+      this.logger.error('Refresh token validation failed:', error);
       throw new HttpException('Invalid refresh token', 401);
     }
   }
@@ -228,5 +229,64 @@ export class AuthService {
         username: telegramUser.username,
       },
     };
+  }
+
+  /**
+   * Проверяет валидность токена и существование пользователя
+   */
+  async validateTokenAndUser(userId: string): Promise<Account | null> {
+    try {
+      const user = await this.prisma.account.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          telegramId: true,
+          email: true,
+          role: true,
+          isBanned: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      if (!user) {
+        this.logger.warn(`Token validation failed: User ${userId} not found`);
+        return null;
+      }
+
+      if (user.isBanned) {
+        this.logger.warn(`Token validation failed: User ${userId} is banned`);
+        return null;
+      }
+
+      return user as Account;
+    } catch (error) {
+      this.logger.error(`Token validation error for user ${userId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Проверяет и обновляет refresh token
+   */
+  async refreshAccessTokenV2(refreshToken: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: this.JWT_REFRESH_SECRET,
+      });
+
+      const user = await this.validateTokenAndUser(payload.id);
+      if (!user) {
+        throw new HttpException('User not found or banned', 401);
+      }
+
+      return {
+        access_token: await this.generateAccessToken(user),
+        refresh_token: await this.generateRefreshToken(user),
+      };
+    } catch (error) {
+      this.logger.error('Refresh token validation failed:', error);
+      throw new HttpException('Invalid refresh token', 401);
+    }
   }
 }
