@@ -10,7 +10,11 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   app.setGlobalPrefix('api');
   app.enableCors({
-    origin: ['http://localhost:3000'],
+    origin: [
+      'http://localhost:3000',
+      'https://tma-backend-production-ceb9.up.railway.app/',
+      'https://tma-frontend-production.up.railway.app/',
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type',
