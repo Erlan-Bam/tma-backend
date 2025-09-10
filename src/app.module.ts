@@ -21,6 +21,7 @@ import * as Joi from 'joi';
         PORT: Joi.number().default(6001),
         DATABASE_URL: Joi.string().uri().required(),
         FRONTEND_URL: Joi.string().uri().required(),
+        WEBAPP_URL: Joi.string().uri().optional(),
         JWT_ACCESS_SECRET: Joi.string().min(8).required(),
         JWT_REFRESH_SECRET: Joi.string().min(8).required(),
         TELEGRAM_BOT_TOKEN: Joi.string().required(),
