@@ -3,15 +3,19 @@ import { Account } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { TmaAuthDto } from './dto/tma-auth.dto';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
+import { TelegramAuthUtils, ParsedInitData } from 'src/shared/utils/telegram-auth.utils';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private readonly JWT_ACCESS_SECRET: string;
   private readonly JWT_REFRESH_SECRET: string;
+  private readonly BOT_TOKEN: string;
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -21,6 +25,7 @@ export class AuthService {
     this.JWT_ACCESS_SECRET = this.configService.getOrThrow('JWT_ACCESS_SECRET');
     this.JWT_REFRESH_SECRET =
       this.configService.getOrThrow('JWT_REFRESH_SECRET');
+    this.BOT_TOKEN = this.configService.getOrThrow('BOT_TOKEN');
   }
   async register(data: RegisterDto) {
     const exist = await this.prisma.account.findFirst({
@@ -145,5 +150,75 @@ export class AuthService {
     } catch (error) {
       throw new HttpException('Invalid refresh token', 401);
     }
+  }
+
+  async tmaAuth(data: TmaAuthDto) {
+    // Валидируем Telegram init data
+    const isValid = TelegramAuthUtils.validateInitData(data.initData, this.BOT_TOKEN);
+    if (!isValid) {
+      throw new HttpException('Invalid Telegram data', 400);
+    }
+
+    // Парсим данные
+    const parsedData: ParsedInitData = TelegramAuthUtils.parseInitData(data.initData);
+    
+    if (!parsedData.user || !parsedData.auth_date) {
+      throw new HttpException('Invalid Telegram user data', 400);
+    }
+
+    // Проверяем свежесть данных (не старше 1 дня)
+    if (!TelegramAuthUtils.isDataFresh(parsedData.auth_date)) {
+      throw new HttpException('Telegram data is too old', 400);
+    }
+
+    const telegramUser = parsedData.user;
+    
+    // Ищем существующего пользователя
+    let account = await this.prisma.account.findUnique({
+      where: { telegramId: telegramUser.id },
+    });
+
+    if (!account) {
+      // Создаем нового пользователя без email и password
+      try {
+        // Создаем child account с временным email
+        const tempEmail = `telegram_${telegramUser.id}@temp.local`;
+        const tempPassword = crypto.randomBytes(32).toString('hex');
+        
+        const childAccount = await this.zephyrService.createChildAccount(
+          tempEmail,
+          tempPassword,
+        );
+
+        account = await this.prisma.account.create({
+          data: {
+            telegramId: telegramUser.id,
+            email: tempEmail,
+            password: tempPassword,
+            childUserId: childAccount.childUserId,
+          },
+        });
+      } catch (error) {
+        this.logger.error('Error creating TMA account: ' + error);
+        throw new HttpException('Failed to create account', 500);
+      }
+    }
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.generateAccessToken(account),
+      this.generateRefreshToken(account),
+    ]);
+
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: {
+        id: account.id,
+        telegramId: account.telegramId,
+        firstName: telegramUser.first_name,
+        lastName: telegramUser.last_name,
+        username: telegramUser.username,
+      },
+    };
   }
 }

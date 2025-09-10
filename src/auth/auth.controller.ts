@@ -1,6 +1,7 @@
 import { Body, Controller, Logger, Post } from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { TmaAuthDto } from './dto/tma-auth.dto';
 import { ApiTags, ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 
@@ -51,5 +52,13 @@ export class AuthController {
       body.token,
     );
     return { access_token: newAccessToken };
+  }
+
+  @Post('tma')
+  @ApiOperation({ summary: 'Authenticate via Telegram Mini App' })
+  @ApiBody({ type: TmaAuthDto })
+  @ApiResponse({ status: 201, description: 'User authenticated via TMA' })
+  async tmaAuth(@Body() data: TmaAuthDto) {
+    return await this.authService.tmaAuth(data);
   }
 }
