@@ -223,7 +223,7 @@ export class AuthService {
       refresh_token: refreshToken,
       user: {
         id: account.id,
-        telegramId: account.telegramId,
+        telegramId: account.telegramId.toString(), // Конвертируем BigInt в строку
         firstName: telegramUser.first_name,
         lastName: telegramUser.last_name,
         username: telegramUser.username,

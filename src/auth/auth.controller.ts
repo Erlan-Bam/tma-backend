@@ -94,7 +94,7 @@ export class AuthController {
       valid: true,
       user: {
         id: validUser.id,
-        telegramId: validUser.telegramId,
+        telegramId: validUser.telegramId.toString(), // Конвертируем BigInt в строку
         email: validUser.email,
         role: validUser.role,
         createdAt: validUser.createdAt,
