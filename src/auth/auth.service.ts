@@ -294,7 +294,8 @@ export class AuthService {
 
       const user = await this.validateTokenAndUser(payload.id);
       if (!user) {
-        throw new HttpException('User not found or banned', 401);
+        this.logger.warn(`Refresh failed: User not found or banned for ID ${payload.id}`);
+        throw new HttpException('REDIRECT_TO_ONBOARDING', 401);
       }
 
       return {
@@ -303,7 +304,14 @@ export class AuthService {
       };
     } catch (error) {
       this.logger.error('Refresh token validation failed:', error);
-      throw new HttpException('Invalid refresh token', 401);
+      
+      // Если это наша специальная ошибка, пробрасываем её
+      if (error instanceof HttpException && error.message === 'REDIRECT_TO_ONBOARDING') {
+        throw error;
+      }
+      
+      // Для всех остальных ошибок также перенаправляем на онбординг
+      throw new HttpException('REDIRECT_TO_ONBOARDING', 401);
     }
   }
 

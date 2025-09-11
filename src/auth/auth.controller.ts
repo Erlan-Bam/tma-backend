@@ -106,8 +106,24 @@ export class AuthController {
   @ApiOperation({ summary: 'Refresh both access and refresh tokens' })
   @ApiBody({ schema: { properties: { refresh_token: { type: 'string' } } } })
   @ApiResponse({ status: 200, description: 'Tokens refreshed successfully' })
+  @ApiResponse({ status: 401, description: 'Redirect to onboarding required' })
   async refreshV2(@Body() body: { refresh_token: string }) {
-    return await this.authService.refreshAccessTokenV2(body.refresh_token);
+    try {
+      return await this.authService.refreshAccessTokenV2(body.refresh_token);
+    } catch (error) {
+      if (error instanceof HttpException && error.message === 'REDIRECT_TO_ONBOARDING') {
+        this.logger.warn('Refresh failed, redirecting to onboarding');
+        throw new HttpException(
+          {
+            error: 'REDIRECT_TO_ONBOARDING',
+            message: 'Session expired. Please authenticate again.',
+            redirectTo: '/onboarding'
+          },
+          401
+        );
+      }
+      throw error;
+    }
   }
 
   @Post('link-zephyr')
