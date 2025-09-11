@@ -194,19 +194,36 @@ export class AuthService {
         const tempEmail = `telegram_${telegramUser.id}@temp.local`;
         const tempPassword = crypto.randomBytes(32).toString('hex');
 
-        const childAccount = await this.zephyrService.createChildAccount(
-          tempEmail,
-          tempPassword,
-        );
+        let childUserId = null;
+
+        try {
+          const childAccount = await this.zephyrService.createChildAccount(
+            tempEmail,
+            tempPassword,
+          );
+          childUserId = childAccount.childUserId;
+          this.logger.debug(
+            `Successfully created Zephyr child account for Telegram ID: ${telegramUser.id}`,
+          );
+        } catch (zephyrError) {
+          this.logger.warn(
+            `Failed to create Zephyr child account for Telegram ID: ${telegramUser.id}, error: ${zephyrError.message}. Creating account without Zephyr integration.`,
+          );
+          // Если аккаунт уже существует в Zephyr или другая ошибка - продолжаем без childUserId
+        }
 
         account = await this.prisma.account.create({
           data: {
             telegramId: telegramUser.id,
             email: tempEmail,
             password: tempPassword,
-            childUserId: childAccount.childUserId,
+            childUserId: childUserId, // Может быть null если не удалось создать в Zephyr
           },
         });
+
+        this.logger.debug(
+          `Successfully created account in database for Telegram ID: ${telegramUser.id}`,
+        );
       } catch (error) {
         this.logger.error('Error creating TMA account: ' + error);
         throw new HttpException('Failed to create account', 500);

@@ -25,6 +25,6 @@ model Account {
   password           String
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
-  childUserId        String   @unique
+  childUserId        String?  @unique
   isBanned           Boolean  @default(false)
 }

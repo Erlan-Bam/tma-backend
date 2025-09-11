@@ -21,6 +21,13 @@ export class CardService {
         throw new HttpException('Account not found', 404);
       }
 
+      if (!account.childUserId) {
+        throw new HttpException(
+          'Zephyr integration not available for this account',
+          400,
+        );
+      }
+
       this.logger.debug('Account: ' + JSON.stringify(account));
       return await this.zephyr.getProductList(account.childUserId);
     } catch (error) {
@@ -42,6 +49,13 @@ export class CardService {
 
       if (!account) {
         throw new HttpException('Account not found', 404);
+      }
+
+      if (!account.childUserId) {
+        throw new HttpException(
+          'Zephyr integration not available for this account',
+          400,
+        );
       }
 
       const response = await this.zephyr.createCard(
