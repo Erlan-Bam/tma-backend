@@ -177,10 +177,21 @@ export class AuthService {
         const tempEmail = `telegram_${telegramUser.id}@temp.local`;
         const tempPassword = crypto.randomBytes(32).toString('hex');
 
-        const childAccount = await this.zephyrService.createChildAccount(
-          tempEmail,
-          tempPassword,
-        );
+        let childAccount: { childUserId: string };
+        try {
+          childAccount = await this.zephyrService.createChildAccount(
+            tempEmail,
+            tempPassword,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Error creating child account in Zephyr for ${tempEmail}: ${error}`,
+          );
+          throw new HttpException(
+            `Failed to create child account for ${tempEmail}`,
+            500,
+          );
+        }
 
         account = await this.prisma.account.create({
           data: {
