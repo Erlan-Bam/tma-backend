@@ -306,4 +306,115 @@ export class AuthService {
       throw new HttpException('Invalid refresh token', 401);
     }
   }
+
+  /**
+   * Связывает существующий Zephyr аккаунт с пользователем по email
+   */
+  async linkZephyrAccount(userId: string, email: string, password: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: userId },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      if (account.childUserId) {
+        throw new HttpException('Account already linked to Zephyr', 400);
+      }
+
+      // Пытаемся найти существующий Zephyr аккаунт
+      try {
+        const childAccount = await this.zephyrService.createChildAccount(
+          email,
+          password,
+        );
+
+        // Если удалось создать - значит такого аккаунта не было
+        await this.prisma.account.update({
+          where: { id: userId },
+          data: {
+            childUserId: childAccount.childUserId,
+            email: email,
+            password: password,
+          },
+        });
+
+        this.logger.log(
+          `Created and linked new Zephyr account for user ${userId}`,
+        );
+        return {
+          success: true,
+          message: 'New Zephyr account created and linked',
+        };
+      } catch (zephyrError) {
+        if (zephyrError.message.includes('already exists')) {
+          // Аккаунт существует в Zephyr, нужно получить его childUserId
+          // Можно попробовать авторизоваться или использовать другой метод для получения childUserId
+          this.logger.warn(
+            `Zephyr account exists for email ${email}, but we need childUserId`,
+          );
+
+          // Обновляем email и password в любом случае
+          await this.prisma.account.update({
+            where: { id: userId },
+            data: {
+              email: email,
+              password: password,
+              // childUserId остается null, пока не найдем способ получить его
+            },
+          });
+
+          return {
+            success: false,
+            message:
+              'Zephyr account exists but childUserId unknown. Please contact support to link existing account.',
+          };
+        }
+
+        throw zephyrError;
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error linking Zephyr account for user ${userId}:`,
+        error,
+      );
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('Failed to link Zephyr account', 500);
+    }
+  }
+
+  /**
+   * Устанавливает childUserId для пользователя (для ручной привязки)
+   */
+  async setChildUserId(userId: string, childUserId: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: userId },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      await this.prisma.account.update({
+        where: { id: userId },
+        data: { childUserId: childUserId },
+      });
+
+      this.logger.log(
+        `Manually set childUserId ${childUserId} for user ${userId}`,
+      );
+      return { success: true, message: 'ChildUserId set successfully' };
+    } catch (error) {
+      this.logger.error(`Error setting childUserId for user ${userId}:`, error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('Failed to set childUserId', 500);
+    }
+  }
 }

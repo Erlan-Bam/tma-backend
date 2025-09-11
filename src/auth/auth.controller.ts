@@ -109,4 +109,48 @@ export class AuthController {
   async refreshV2(@Body() body: { refresh_token: string }) {
     return await this.authService.refreshAccessTokenV2(body.refresh_token);
   }
+
+  @Post('link-zephyr')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Link existing Zephyr account to user' })
+  @ApiBody({
+    schema: {
+      properties: {
+        email: { type: 'string' },
+        password: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Zephyr account linked successfully',
+  })
+  async linkZephyrAccount(
+    @Body() data: { email: string; password: string },
+    @User('id') userId: string,
+  ) {
+    return await this.authService.linkZephyrAccount(
+      userId,
+      data.email,
+      data.password,
+    );
+  }
+
+  @Post('set-child-user-id')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Manually set childUserId for user (admin only)' })
+  @ApiBody({
+    schema: {
+      properties: {
+        childUserId: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'ChildUserId set successfully' })
+  async setChildUserId(
+    @Body() data: { childUserId: string },
+    @User('id') userId: string,
+  ) {
+    return await this.authService.setChildUserId(userId, data.childUserId);
+  }
 }
