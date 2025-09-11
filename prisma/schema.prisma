@@ -20,11 +20,11 @@ enum Role {
 model Account {
   id                 String   @id @default(uuid())
   role               Role     @default(USER)
-  telegramId         BigInt      @unique
+  telegramId         BigInt   @unique
   email              String   @unique
   password           String
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
-  childUserId        String?  @unique
+  childUserId        String   @unique
   isBanned           Boolean  @default(false)
 }

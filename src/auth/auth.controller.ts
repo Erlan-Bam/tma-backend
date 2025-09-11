@@ -7,44 +7,18 @@ import {
   UseGuards,
   HttpException,
 } from '@nestjs/common';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
 import { TmaAuthDto } from './dto/tma-auth.dto';
 import { ApiTags, ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
 import { User } from 'src/shared/decorator/user.decorator';
+import { AuthGuard } from '@nestjs/passport';
+import { UserGuard } from 'src/shared/guards/user.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
   constructor(private authService: AuthService) {}
-
-  @Post('login')
-  @ApiOperation({ summary: 'Login user with email or phone and password' })
-  @ApiBody({ type: LoginDto })
-  @ApiResponse({ status: 201, description: 'Tokens issued' })
-  async login(@Body() data: LoginDto) {
-    const tokens = await this.authService.login(data);
-    return {
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-    };
-  }
-
-  @Post('register')
-  @ApiOperation({ summary: 'Register user with email or phone and password' })
-  @ApiBody({ type: RegisterDto })
-  @ApiResponse({ status: 201, description: 'Tokens issued after registration' })
-  async register(@Body() data: RegisterDto) {
-    this.logger.debug(JSON.stringify(data));
-    const tokens = await this.authService.register(data);
-    return {
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-    };
-  }
 
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token using refresh token' })
@@ -73,7 +47,7 @@ export class AuthController {
   }
 
   @Get('validate')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'), UserGuard)
   @ApiOperation({ summary: 'Validate current token and get user info' })
   @ApiResponse({
     status: 200,
@@ -84,7 +58,6 @@ export class AuthController {
     description: 'Token is invalid or user not found',
   })
   async validateToken(@User() user: any) {
-    // Дополнительная проверка пользователя в базе данных
     const validUser = await this.authService.validateTokenAndUser(user.id);
     if (!validUser) {
       throw new HttpException('User not found or banned', 401);
@@ -94,92 +67,11 @@ export class AuthController {
       valid: true,
       user: {
         id: validUser.id,
-        telegramId: validUser.telegramId.toString(), // Конвертируем BigInt в строку
+        telegramId: validUser.telegramId.toString(),
         email: validUser.email,
         role: validUser.role,
         createdAt: validUser.createdAt,
       },
     };
-  }
-
-  @Post('refresh-v2')
-  @ApiOperation({ summary: 'Refresh both access and refresh tokens' })
-  @ApiBody({ schema: { properties: { refresh_token: { type: 'string' } } } })
-  @ApiResponse({ status: 200, description: 'Tokens refreshed successfully' })
-  @ApiResponse({ status: 401, description: 'Redirect to onboarding required' })
-  async refreshV2(@Body() body: { refresh_token: string }) {
-    try {
-      return await this.authService.refreshAccessTokenV2(body.refresh_token);
-    } catch (error) {
-      if (
-        error instanceof HttpException &&
-        error.message === 'REDIRECT_TO_ONBOARDING'
-      ) {
-        this.logger.warn('Refresh failed, redirecting to onboarding');
-        throw new HttpException(
-          {
-            error: 'REDIRECT_TO_ONBOARDING',
-            message: 'Session expired. Please authenticate again.',
-            redirectTo: '/onboarding',
-          },
-          401,
-        );
-      }
-      throw error;
-    }
-  }
-
-  @Post('link-zephyr')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Link existing Zephyr account to user' })
-  @ApiBody({
-    schema: {
-      properties: {
-        email: { type: 'string' },
-        password: { type: 'string' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Zephyr account linked successfully',
-  })
-  async linkZephyrAccount(
-    @Body() data: { email: string; password: string },
-    @User('id') userId: string,
-  ) {
-    return await this.authService.linkZephyrAccount(
-      userId,
-      data.email,
-      data.password,
-    );
-  }
-
-  @Post('retry-zephyr-linking')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({
-    summary: 'Retry Zephyr account linking with TMA registration data',
-  })
-  @ApiResponse({ status: 200, description: 'Zephyr linking attempted' })
-  async retryZephyrLinking(@User('id') userId: string) {
-    return await this.authService.retryZephyrLinking(userId);
-  }
-
-  @Post('set-child-user-id')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Manually set childUserId for user (admin only)' })
-  @ApiBody({
-    schema: {
-      properties: {
-        childUserId: { type: 'string' },
-      },
-    },
-  })
-  @ApiResponse({ status: 200, description: 'ChildUserId set successfully' })
-  async setChildUserId(
-    @Body() data: { childUserId: string },
-    @User('id') userId: string,
-  ) {
-    return await this.authService.setChildUserId(userId, data.childUserId);
   }
 }
