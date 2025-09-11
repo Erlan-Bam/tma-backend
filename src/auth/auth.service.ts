@@ -388,6 +388,87 @@ export class AuthService {
   }
 
   /**
+   * Повторная попытка создания Zephyr аккаунта с данными из TMA регистрации
+   */
+  async retryZephyrLinking(userId: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: userId },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      if (account.childUserId) {
+        return {
+          success: true,
+          message: 'Account already linked to Zephyr',
+          childUserId: account.childUserId,
+        };
+      }
+
+      // Используем существующие email и password из аккаунта
+      const email = account.email;
+      const password = account.password;
+
+      this.logger.debug(
+        `Retrying Zephyr linking for user ${userId} with email: ${email}`,
+      );
+
+      // Пытаемся создать child account с существующими данными
+      try {
+        const childAccount = await this.zephyrService.createChildAccount(
+          email,
+          password,
+        );
+
+        // Если удалось создать - обновляем childUserId
+        await this.prisma.account.update({
+          where: { id: userId },
+          data: {
+            childUserId: childAccount.childUserId,
+          },
+        });
+
+        this.logger.log(
+          `Successfully linked Zephyr account for user ${userId}, childUserId: ${childAccount.childUserId}`,
+        );
+
+        return {
+          success: true,
+          message: 'Zephyr account linked successfully',
+          childUserId: childAccount.childUserId,
+        };
+      } catch (zephyrError) {
+        if (zephyrError.message.includes('already exists')) {
+          this.logger.warn(
+            `Zephyr account already exists for user ${userId} with email ${email}. Manual childUserId linking required.`,
+          );
+
+          return {
+            success: false,
+            message: `Zephyr account exists but needs manual childUserId linking. Email: ${email}`,
+            email: email,
+            needsManualLinking: true,
+          };
+        }
+
+        throw zephyrError;
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error retrying Zephyr linking for user ${userId}:`,
+        error,
+      );
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('Failed to retry Zephyr linking', 500);
+    }
+  }
+
+  /**
    * Устанавливает childUserId для пользователя (для ручной привязки)
    */
   async setChildUserId(userId: string, childUserId: string) {

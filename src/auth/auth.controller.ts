@@ -136,6 +136,16 @@ export class AuthController {
     );
   }
 
+  @Post('retry-zephyr-linking')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Retry Zephyr account linking with TMA registration data',
+  })
+  @ApiResponse({ status: 200, description: 'Zephyr linking attempted' })
+  async retryZephyrLinking(@User('id') userId: string) {
+    return await this.authService.retryZephyrLinking(userId);
+  }
+
   @Post('set-child-user-id')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Manually set childUserId for user (admin only)' })
