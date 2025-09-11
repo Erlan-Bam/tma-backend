@@ -174,7 +174,7 @@ export class AuthService {
 
     if (!account) {
       try {
-        const tempEmail = `telegram_${telegramUser.id}@temp.local`;
+        const tempEmail = `telegram_${telegramUser.id}@arctic.pay`;
         const tempPassword = crypto.randomBytes(32).toString('hex');
 
         let childAccount: { childUserId: string };
