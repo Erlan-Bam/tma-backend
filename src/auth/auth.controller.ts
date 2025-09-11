@@ -111,15 +111,18 @@ export class AuthController {
     try {
       return await this.authService.refreshAccessTokenV2(body.refresh_token);
     } catch (error) {
-      if (error instanceof HttpException && error.message === 'REDIRECT_TO_ONBOARDING') {
+      if (
+        error instanceof HttpException &&
+        error.message === 'REDIRECT_TO_ONBOARDING'
+      ) {
         this.logger.warn('Refresh failed, redirecting to onboarding');
         throw new HttpException(
           {
             error: 'REDIRECT_TO_ONBOARDING',
             message: 'Session expired. Please authenticate again.',
-            redirectTo: '/onboarding'
+            redirectTo: '/onboarding',
           },
-          401
+          401,
         );
       }
       throw error;
