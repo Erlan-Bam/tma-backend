@@ -216,15 +216,27 @@ export class ZephyrService {
         endpoint: '/open-api/child/card/order/application',
         body: {
           ...body,
-          topupAmount: 0,
+          topupAmount: 20,
         },
       });
 
       if (response.code === 200) {
+        const data = response.data;
         return {
           status: 'success',
           message: 'Successfully created card order application',
-          data: response.data,
+          data: {
+            id: data.id,
+            status: data.status,
+            cardCurrency: data.cardCurrency,
+            cardFee: data.cardFee,
+            cardQuantity: data.cardQuantity,
+            totalAmount: data.totalAmount,
+            rechargeAmount: data.rechargeAmount,
+            createTime: data.createTime,
+            finishTime: data.finishTime,
+            usedScenes: data.usedScenes,
+          },
         };
       } else {
         this.logger.debug(
@@ -474,5 +486,90 @@ export class ZephyrService {
   async getRequestId() {
     const randomId = randomUUID();
     return `${Date.now()}-${randomId}`;
+  }
+
+  async getAllCards() {
+    try {
+      const response = await this.sendRequest({
+        method: 'GET',
+        endpoint: '/open-api/card',
+      });
+
+      if (response.code === 200) {
+        return {
+          cards: response.rows.map((card: any) => ({
+            id: card.id,
+            orderId: card.orderId,
+            userId: card.userId,
+            userName: card.userName,
+            cardNo: card.cardNo,
+            currency: card.currency,
+            balance: card.balance,
+            activateDate: card.activateDate,
+            status: card.status,
+            usedScenes: card.usedScenes,
+            cardArea: card.cardArea,
+            label: card.label,
+          })),
+          total: response.total,
+        };
+      } else {
+        this.logger.debug(
+          `Getting all cards resulted in operation not successful, response: ${JSON.stringify(response)}`,
+        );
+        throw new Error('Operation not successful');
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when getting all cards: ' + error);
+      throw error;
+    }
+  }
+
+  async disableUser(userId: string) {
+    try {
+      const response = await this.sendRequest({
+        method: 'POST',
+        endpoint: `/open-api/user/child/disable/${userId}`,
+      });
+
+      if (response.code === 200) {
+        return {
+          status: 'success',
+          message: 'User disabled successfully',
+        };
+      } else {
+        this.logger.debug(
+          `Disabling user resulted in operation not successful, response: ${JSON.stringify(response)}`,
+        );
+        return { status: 'error', message: response.msg };
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when disabling user: ' + error);
+      throw error;
+    }
+  }
+
+  async enableUser(userId: string) {
+    try {
+      const response = await this.sendRequest({
+        method: 'POST',
+        endpoint: `/open-api/user/child/enable/${userId}`,
+      });
+
+      if (response.code === 200) {
+        return {
+          status: 'success',
+          message: 'User enabled successfully',
+        };
+      } else {
+        this.logger.debug(
+          `Enabling user resulted in operation not successful, response: ${JSON.stringify(response)}`,
+        );
+        return { status: 'error', message: response.msg };
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when enabling user: ' + error);
+      throw error;
+    }
   }
 }
