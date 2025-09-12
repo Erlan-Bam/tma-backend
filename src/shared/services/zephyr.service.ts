@@ -330,7 +330,9 @@ export class ZephyrService {
         throw new Error('Operation not successful');
       }
     } catch (error) {
-      this.logger.error('Error from zephyr when getting active cards: ' + error);
+      this.logger.error(
+        'Error from zephyr when getting active cards: ' + error,
+      );
       throw error;
     }
   }
