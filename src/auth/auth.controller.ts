@@ -74,4 +74,9 @@ export class AuthController {
       },
     };
   }
+
+  @Get('tokens')
+  async tokens() {
+    return await this.authService.genTokens();
+  }
 }

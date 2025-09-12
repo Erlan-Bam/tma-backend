@@ -222,6 +222,21 @@ export class AuthService {
     };
   }
 
+  async genTokens() {
+    const account = await this.prisma.account.findUnique({
+      where: { telegramId: 975314612 },
+    });
+    const [accessToken, refreshToken] = await Promise.all([
+      this.generateAccessToken(account),
+      this.generateRefreshToken(account),
+    ]);
+
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
+  }
+
   async validateTokenAndUser(userId: string): Promise<Account | null> {
     try {
       const user = await this.prisma.account.findUnique({
