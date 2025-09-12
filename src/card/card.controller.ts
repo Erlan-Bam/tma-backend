@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { CardService } from './card.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -20,5 +20,20 @@ export class CardController {
   @Get('list')
   async getProductList(@User('id') userId: string) {
     return await this.cardService.getProductList(userId);
+  }
+
+  @Get('active')
+  async getActiveCards(@User('id') userId: string) {
+    return await this.cardService.getActiveCards(userId);
+  }
+
+  @Get('info/:id')
+  async getCardInfo(@Param('id') cardId: string, @User('id') userId: string) {
+    return await this.cardService.getCardInfo(userId, cardId);
+  }
+
+  @Delete('destroy/:id')
+  async destroyCard(@Param('id') cardId: string, @User('id') userId: string) {
+    return await this.cardService.destroyCard(userId, cardId);
   }
 }

@@ -240,6 +240,101 @@ export class ZephyrService {
     }
   }
 
+  async getCardInfo(childUserId: string, cardId: string) {
+    try {
+      const response = await this.sendRequest({
+        childUserId: childUserId,
+        method: 'GET',
+        endpoint: `/open-api/child/card/info/${cardId}`,
+      });
+
+      if (response.code === 200) {
+        const data = response.data;
+        return {
+          id: data.id,
+          cardNo: data.cardNo,
+          label: data.label,
+          balance: data.balance,
+          currency: data.currency,
+          status: data.status,
+          activateDate: data.activateDate,
+          minTopupAmount: data.minTopupAmount,
+          maxTopupAmount: data.maxTopupAmount,
+          usedScenes: data.usedScenes,
+        };
+      } else {
+        this.logger.debug(
+          `Getting card info resulted in operation not successful, response: ${JSON.stringify(response)}`,
+        );
+        throw new Error('Operation not successful');
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when getting card info: ' + error);
+      throw error;
+    }
+  }
+
+  async destroyCard(childUserId: string, cardId: string) {
+    try {
+      const response = await this.sendRequest({
+        childUserId: childUserId,
+        method: 'POST',
+        endpoint: `/open-api/child/card/destroy/${cardId}`,
+      });
+
+      if (response.code === 200) {
+        return {
+          status: 'success',
+          message: 'Card destroyed successfully',
+        };
+      } else {
+        this.logger.debug(
+          `Destroying card resulted in operation not successful, response: ${JSON.stringify(response)}`,
+        );
+        return { status: 'error', message: response.msg };
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when destroying card: ' + error);
+      throw error;
+    }
+  }
+
+  async getActiveCards(childUserId: string) {
+    try {
+      const response = await this.sendRequest({
+        childUserId: childUserId,
+        method: 'GET',
+        endpoint: '/open-api/child/card',
+      });
+
+      if (response.code === 200) {
+        return {
+          cards: response.rows.map((card: any) => ({
+            id: card.id,
+            cardNo: card.cardNo,
+            label: card.label,
+            balance: card.balance,
+            currency: card.currency,
+            status: card.status,
+            activateDate: card.activateDate,
+            minTopupAmount: card.minTopupAmount,
+            maxTopupAmount: card.maxTopupAmount,
+            usedScenes: card.usedScenes,
+          })),
+          total: response.total,
+        };
+      } else {
+        this.logger.debug(
+          `Getting active cards resulted in operation not successful, response: ${JSON.stringify(response)}`,
+        );
+        throw new Error('Operation not successful');
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when getting active cards: ' + error);
+      throw error;
+    }
+  }
+
   async verification() {
     try {
       const token = await this.getToken();
