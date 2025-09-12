@@ -20,24 +20,6 @@ export class AuthController {
   private readonly logger = new Logger(AuthController.name);
   constructor(private authService: AuthService) {}
 
-  @Post('refresh')
-  @ApiOperation({ summary: 'Refresh access token using refresh token' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        token: { type: 'string' },
-      },
-    },
-  })
-  @ApiResponse({ status: 200, description: 'New access token' })
-  async refresh(@Body() body: { token: string }) {
-    const newAccessToken = await this.authService.refreshAccessToken(
-      body.token,
-    );
-    return { access_token: newAccessToken };
-  }
-
   @Post('tma')
   @ApiOperation({ summary: 'Authenticate via Telegram Mini App' })
   @ApiBody({ type: TmaAuthDto })

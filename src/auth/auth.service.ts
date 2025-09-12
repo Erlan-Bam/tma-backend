@@ -114,37 +114,9 @@ export class AuthService {
       },
       {
         secret: this.JWT_ACCESS_SECRET,
-        expiresIn: '1d',
+        expiresIn: '1y',
       },
     );
-  }
-  async generateRefreshToken(account: Account): Promise<string> {
-    return await this.jwtService.signAsync(
-      {
-        id: account.id,
-      },
-      {
-        secret: this.JWT_REFRESH_SECRET,
-        expiresIn: '7d',
-      },
-    );
-  }
-  async refreshAccessToken(refreshToken: string): Promise<string> {
-    try {
-      const payload = await this.jwtService.verifyAsync(refreshToken, {
-        secret: this.JWT_REFRESH_SECRET,
-      });
-
-      const user = await this.validateTokenAndUser(payload.id);
-      if (!user) {
-        throw new HttpException('User not found or banned', 401);
-      }
-
-      return this.generateAccessToken(user);
-    } catch (error) {
-      this.logger.error('Refresh token validation failed:', error);
-      throw new HttpException('Invalid refresh token', 401);
-    }
   }
 
   async tmaAuth(data: TmaAuthDto) {
@@ -211,14 +183,12 @@ export class AuthService {
       }
     }
 
-    const [accessToken, refreshToken] = await Promise.all([
+    const [accessToken] = await Promise.all([
       this.generateAccessToken(account),
-      this.generateRefreshToken(account),
     ]);
 
     return {
       access_token: accessToken,
-      refresh_token: refreshToken,
     };
   }
 
@@ -226,14 +196,12 @@ export class AuthService {
     const account = await this.prisma.account.findUnique({
       where: { telegramId: 975314612 },
     });
-    const [accessToken, refreshToken] = await Promise.all([
+    const [accessToken] = await Promise.all([
       this.generateAccessToken(account),
-      this.generateRefreshToken(account),
     ]);
 
     return {
       access_token: accessToken,
-      refresh_token: refreshToken,
     };
   }
 
