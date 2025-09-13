@@ -7,10 +7,7 @@ import { TmaAuthDto } from './dto/tma-auth.dto';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
-import {
-  TelegramAuthUtils,
-  ParsedInitData,
-} from '../shared/utils/telegram-auth.utils';
+import { TelegramAuthUtils } from 'src/shared/utils/telegram-auth.utils';
 import * as crypto from 'crypto';
 
 @Injectable()
