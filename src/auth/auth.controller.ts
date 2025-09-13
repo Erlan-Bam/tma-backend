@@ -12,7 +12,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ApiTags, ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from '../shared/guards/jwt-auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 import { User } from '../shared/decorator/user.decorator';
 
 @ApiTags('Auth')
@@ -73,7 +73,7 @@ export class AuthController {
   }
 
   @Get('validate')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Validate current token and get user info' })
   @ApiResponse({
     status: 200,
