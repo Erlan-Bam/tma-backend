@@ -75,6 +75,38 @@ export class CardService {
     }
   }
 
+  async getActiveCards(id: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: id },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      if (!account.childUserId) {
+        throw new HttpException(
+          'Zephyr integration not available for this account',
+          400,
+        );
+      }
+
+      this.logger.debug(
+        'Getting active cards for account: ' + JSON.stringify(account),
+      );
+      return await this.zephyr.getActiveCards(account.childUserId);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        `Error when getting active cards for userId=${id}, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
   async getCardInfo(id: string, cardId: string) {
     try {
       const account = await this.prisma.account.findUnique({
@@ -92,6 +124,10 @@ export class CardService {
         );
       }
 
+      this.logger.debug(
+        `Getting card info for cardId=${cardId}, account: ` +
+          JSON.stringify(account),
+      );
       return await this.zephyr.getCardInfo(account.childUserId, cardId);
     } catch (error) {
       if (error instanceof HttpException) {
@@ -121,6 +157,9 @@ export class CardService {
         );
       }
 
+      this.logger.debug(
+        `Destroying card cardId=${cardId}, account: ` + JSON.stringify(account),
+      );
       return await this.zephyr.destroyCard(account.childUserId, cardId);
     } catch (error) {
       if (error instanceof HttpException) {
@@ -128,35 +167,6 @@ export class CardService {
       }
       this.logger.error(
         `Error when destroying card for userId=${id}, cardId=${cardId}, error: ${error}`,
-      );
-      throw new HttpException('Something Went Wrong', 500);
-    }
-  }
-
-  async getActiveCards(id: string) {
-    try {
-      const account = await this.prisma.account.findUnique({
-        where: { id: id },
-      });
-
-      if (!account) {
-        throw new HttpException('Account not found', 404);
-      }
-
-      if (!account.childUserId) {
-        throw new HttpException(
-          'Zephyr integration not available for this account',
-          400,
-        );
-      }
-
-      return await this.zephyr.getActiveCards(account.childUserId);
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      this.logger.error(
-        `Error when getting active cards for userId=${id}, error: ${error}`,
       );
       throw new HttpException('Something Went Wrong', 500);
     }
