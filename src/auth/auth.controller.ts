@@ -12,8 +12,8 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ApiTags, ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
-import { User } from 'src/shared/decorator/user.decorator';
+import { JwtAuthGuard } from '../shared/guards/jwt-auth.guard';
+import { User } from '../shared/decorator/user.decorator';
 
 @ApiTags('Auth')
 @Controller('auth')

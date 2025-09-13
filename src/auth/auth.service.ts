@@ -10,7 +10,7 @@ import { ZephyrService } from 'src/shared/services/zephyr.service';
 import {
   TelegramAuthUtils,
   ParsedInitData,
-} from 'src/shared/utils/telegram-auth.utils';
+} from '../shared/utils/telegram-auth.utils';
 import * as crypto from 'crypto';
 
 @Injectable()
