@@ -19,6 +19,17 @@ export class AdminService {
     }
   }
 
+  async getAllAccounts() {
+    try {
+      const accounts = await this.prisma.account.findMany({});
+
+      return accounts;
+    } catch (error) {
+      this.logger.error(`Error when getting all accounts, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
   async getUserCards(childUserId: string) {
     try {
       return await this.zephyr.getActiveCards(childUserId);

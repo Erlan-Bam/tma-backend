@@ -22,6 +22,11 @@ export class AdminController {
     return await this.adminService.getAllCards();
   }
 
+  @Get('accounts')
+  async getAllAccounts() {
+    return await this.adminService.getAllAccounts();
+  }
+
   @Get('user/:childUserId/cards')
   async getUserCards(@Param('childUserId') childUserId: string) {
     return await this.adminService.getUserCards(childUserId);
