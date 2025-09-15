@@ -76,16 +76,28 @@ export class CardService {
   }
 
   async getActiveCards(id: string) {
+    this.logger.log(`🎯 Starting getActiveCards request for userId: ${id}`);
+
     try {
+      this.logger.debug(`🔍 Looking up account with id: ${id}`);
+
       const account = await this.prisma.account.findUnique({
         where: { id: id },
       });
 
       if (!account) {
+        this.logger.warn(`❌ Account not found for userId: ${id}`);
         throw new HttpException('Account not found', 404);
       }
 
+      this.logger.log(
+        `✅ Account found: ${account.email || 'no email'}, childUserId: ${account.childUserId || 'null'}`,
+      );
+
       if (!account.childUserId) {
+        this.logger.warn(
+          `⚠️ No childUserId for account ${id}, Zephyr integration not available`,
+        );
         throw new HttpException(
           'Zephyr integration not available for this account',
           400,
@@ -93,16 +105,37 @@ export class CardService {
       }
 
       this.logger.debug(
-        'Getting active cards for account: ' + JSON.stringify(account),
+        `📋 Account details: ${JSON.stringify({
+          id: account.id,
+          email: account.email,
+          childUserId: account.childUserId,
+          createdAt: account.createdAt,
+        })}`,
       );
-      return await this.zephyr.getActiveCards(account.childUserId);
+
+      this.logger.log(
+        `🚀 Calling Zephyr getActiveCards with childUserId: ${account.childUserId}`,
+      );
+
+      const activeCards = await this.zephyr.getActiveCards(account.childUserId);
+
+      this.logger.log(
+        `📊 Zephyr returned ${Array.isArray(activeCards) ? activeCards.length : 'unknown'} active cards`,
+      );
+      this.logger.debug(`📋 Active cards data: ${JSON.stringify(activeCards)}`);
+
+      return activeCards;
     } catch (error) {
       if (error instanceof HttpException) {
+        this.logger.error(
+          `💥 HTTP Exception in getActiveCards for userId=${id}: ${error.message} (status: ${error.getStatus()})`,
+        );
         throw error;
       }
       this.logger.error(
-        `Error when getting active cards for userId=${id}, error: ${error}`,
+        `💥 Unexpected error in getActiveCards for userId=${id}, error: ${error}`,
       );
+      this.logger.error(`🔍 Error stack: ${error.stack}`);
       throw new HttpException('Something Went Wrong', 500);
     }
   }
