@@ -63,6 +63,15 @@ export class CardService {
         createCardDto,
       );
 
+      // Check if Zephyr returned an error status
+      if (response.status === 'error') {
+        this.logger.warn(`❌ Zephyr error: ${response.message}`);
+        throw new HttpException(
+          response.message || 'Card creation failed',
+          400,
+        );
+      }
+
       return response;
     } catch (error) {
       if (error instanceof HttpException) {
