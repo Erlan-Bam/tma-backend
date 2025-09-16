@@ -33,7 +33,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
     this.bot.command('start', async (ctx) => {
       const url = this.configService.getOrThrow<string>('FRONTEND_URL');
 
-      // Получаем информацию о пользователе
       const user = ctx.from;
       const firstName = user?.first_name || 'Friend';
       const username = user?.username ? `@${user.username}` : '';
@@ -63,7 +62,7 @@ Welcome to Arctic Pay, a new way to manage your finances! 💎
       `.trim();
 
       const keyboard = new InlineKeyboard()
-        .webApp('🏦 Open Arctic Pay Wallet', webAppUrl)
+        .webApp('🏦 Open Arctic Pay Wallet', url)
         .row()
         .url('📞 Support', 'https://t.me/arctic_pay_support')
         .url('📖 Help Center', 'https://arcticpay.io/help');
