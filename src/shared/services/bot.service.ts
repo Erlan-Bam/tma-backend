@@ -31,17 +31,12 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
 
   private setup() {
     this.bot.command('start', async (ctx) => {
-      const webAppUrl =
-        this.configService.get<string>('WEBAPP_URL') ||
-        'https://tma-frontend-production.up.railway.app/';
+      const url = this.configService.getOrThrow<string>('FRONTEND_URL');
 
       await ctx.reply(
         'Welcome to Arctic Pay! Use the buttons below to navigate.',
         {
-          reply_markup: new InlineKeyboard().webApp(
-            'Open Arctic Pay!',
-            webAppUrl,
-          ),
+          reply_markup: new InlineKeyboard().webApp('Open Arctic Pay!', url),
         },
       );
     });

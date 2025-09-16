@@ -25,6 +25,9 @@ export class CardController {
     return await this.cardService.createCard(userId, data);
   }
 
+  @Post('topup/:id')
+  async topupCard() {}
+
   @Get('list')
   async getProductList(@User('id') userId: string) {
     return await this.cardService.getProductList(userId);
