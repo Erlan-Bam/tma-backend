@@ -63,7 +63,6 @@ export class CardService {
         createCardDto,
       );
 
-      // Check if Zephyr returned an error status
       if (response.status === 'error') {
         this.logger.warn(`❌ Zephyr error: ${response.message}`);
         throw new HttpException(
@@ -128,9 +127,6 @@ export class CardService {
 
       const activeCards = await this.zephyr.getActiveCards(account.childUserId);
 
-      this.logger.log(
-        `📊 Zephyr returned ${Array.isArray(activeCards) ? activeCards.length : 'unknown'} active cards`,
-      );
       this.logger.debug(`📋 Active cards data: ${JSON.stringify(activeCards)}`);
 
       return activeCards;

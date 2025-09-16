@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class CreateCardDto {
   @ApiProperty({
@@ -19,4 +20,16 @@ export class CreateCardDto {
   @IsString()
   @IsNotEmpty()
   usedScenes: string;
+
+  @Type(() => Number)
+  @ApiProperty({
+    description: 'The initial top-up amount for the card (minimum is 20)',
+    example: 50,
+    required: true,
+    minimum: 20,
+  })
+  @IsNotEmpty()
+  @IsInt()
+  @Min(20)
+  topupAmount: number;
 }

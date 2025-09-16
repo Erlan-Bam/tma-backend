@@ -215,10 +215,7 @@ export class ZephyrService {
         childUserId: childUserId,
         method: 'POST',
         endpoint: '/open-api/child/card/order/application',
-        body: {
-          ...body,
-          topupAmount: 20,
-        },
+        body: body,
       });
 
       if (response.code === 200) {
