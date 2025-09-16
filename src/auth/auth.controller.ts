@@ -26,4 +26,9 @@ export class AuthController {
   async tmaAuth(@Body() data: TmaAuthDto) {
     return await this.authService.tmaAuth(data);
   }
+
+  @Get('test')
+  async test() {
+    return await this.authService.test();
+  }
 }

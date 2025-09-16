@@ -98,4 +98,16 @@ export class AuthService {
       },
     };
   }
+
+  async test() {
+    let account = await this.prisma.account.findUnique({
+      where: { telegramId: 975314612 },
+    });
+
+    const accessToken = await this.generateAccessToken(account);
+
+    return {
+      access_token: accessToken,
+    };
+  }
 }
