@@ -151,6 +151,7 @@ export class ZephyrService {
             cardArea: c.cardArea,
             cardBinId: c.cardBinId,
             currency: c.currency,
+            price: c.price,
             minOpenAmount: c.minOpenAmount,
             maxOpenAmount: c.maxOpenAmount,
             usedScenes: c.usedScenes,
