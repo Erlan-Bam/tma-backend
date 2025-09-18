@@ -1,15 +1,5 @@
-import {
-  Body,
-  Controller,
-  Logger,
-  Post,
-  Get,
-  UseGuards,
-  HttpException,
-} from '@nestjs/common';
+import { Body, Controller, Logger, Post, Get } from '@nestjs/common';
 import { TmaAuthDto } from './dto/tma-auth.dto';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
 import { ApiTags, ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 
