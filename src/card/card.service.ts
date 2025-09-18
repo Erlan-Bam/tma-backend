@@ -2,6 +2,7 @@ import { HttpException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
 import { CreateCardDto } from './dto/create-card.dto';
+import { TopupCardDto } from './dto/topup-card.dto';
 
 @Injectable()
 export class CardService {
@@ -69,6 +70,45 @@ export class CardService {
           response.message || 'Card creation failed',
           400,
         );
+      }
+
+      return response;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        `Error when creating card for userId=${id}, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async topupCard(id: string, topupCardDto: TopupCardDto) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: id },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      if (!account.childUserId) {
+        throw new HttpException(
+          'Zephyr integration not available for this account',
+          400,
+        );
+      }
+
+      const response = await this.zephyr.topupCard(
+        account.childUserId,
+        topupCardDto,
+      );
+
+      if (response.status === 'error') {
+        this.logger.warn(`❌ Zephyr error: ${response.message}`);
+        throw new HttpException(response.message || 'Card topup failed', 400);
       }
 
       return response;

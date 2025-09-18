@@ -13,6 +13,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { User } from 'src/shared/decorator/user.decorator';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UserGuard } from 'src/shared/guards/user.guard';
+import { TopupCardDto } from './dto/topup-card.dto';
 
 @Controller('card')
 @ApiBearerAuth('JWT')
@@ -26,7 +27,9 @@ export class CardController {
   }
 
   @Post('topup/:id')
-  async topupCard() {}
+  async topupCard(@User('id') userId: string, @Body() data: TopupCardDto) {
+    return await this.cardService.topupCard(userId, data);
+  }
 
   @Get('list')
   async getProductList(@User('id') userId: string) {

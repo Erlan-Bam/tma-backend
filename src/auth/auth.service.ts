@@ -1,14 +1,12 @@
 import { HttpException, Injectable, Logger } from '@nestjs/common';
 import { Account } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
 import { TmaAuthDto } from './dto/tma-auth.dto';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
-import { TelegramAuthUtils } from 'src/shared/utils/telegram-auth.utils';
 import * as crypto from 'crypto';
+import { ParsedInitData } from './types/telegram.types';
 
 @Injectable()
 export class AuthService {
@@ -43,10 +41,7 @@ export class AuthService {
   }
 
   async tmaAuth(data: TmaAuthDto) {
-    const parsedData = TelegramAuthUtils.validateInitData(
-      data.initData,
-      this.BOT_TOKEN,
-    );
+    const parsedData = this.validateInitData(data.initData, this.BOT_TOKEN);
     if (!parsedData) {
       throw new HttpException('Invalid Telegram data', 400);
     }
@@ -97,6 +92,72 @@ export class AuthService {
         username: telegramUser.username,
       },
     };
+  }
+
+  private validateInitData(
+    initData: string,
+    botToken: string,
+  ): ParsedInitData | null {
+    try {
+      const urlParams = new URLSearchParams(initData);
+      const data: any = {};
+
+      for (const [key, value] of urlParams.entries()) {
+        if (key === 'user') {
+          try {
+            data[key] = JSON.parse(value);
+          } catch {
+            data[key] = value;
+          }
+        } else if (key === 'auth_date') {
+          data[key] = parseInt(value);
+        } else {
+          data[key] = value;
+        }
+      }
+
+      const hash = data.hash;
+      delete data.hash;
+
+      const dataCheckString = Object.keys(data)
+        .sort()
+        .map(
+          (key) =>
+            `${key}=${typeof data[key] === 'object' ? JSON.stringify(data[key]) : data[key]}`,
+        )
+        .join('\n');
+
+      const secretKey = crypto
+        .createHmac('sha256', 'WebAppData')
+        .update(botToken)
+        .digest();
+
+      const calculatedHash = crypto
+        .createHmac('sha256', secretKey)
+        .update(dataCheckString)
+        .digest('hex');
+
+      if (calculatedHash !== hash) {
+        return null;
+      }
+
+      const authDate = data.auth_date * 1000;
+      const now = Date.now();
+      const maxAge = 24 * 60 * 60 * 1000;
+
+      if (now - authDate > maxAge) {
+        return null;
+      }
+
+      return { ...data, hash } as ParsedInitData;
+    } catch (error) {
+      console.error('Error validating Telegram init data:', error);
+      return null;
+    }
+  }
+
+  static extractUser(parsedData: ParsedInitData) {
+    return parsedData.user || null;
   }
 
   async test() {

@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://postgres:JlOCefjfTVSxbeOcCrHaGtHiYZwOvIdx@turntable.proxy.rlwy.net:23855/railway"
+  url      = env("DATABASE_URL")
 }
 enum Role {
   USER
