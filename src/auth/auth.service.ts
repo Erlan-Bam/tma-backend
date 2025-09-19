@@ -190,10 +190,6 @@ export class AuthService {
     }
   }
 
-  static extractUser(parsedData: ParsedInitData) {
-    return parsedData.user || null;
-  }
-
   async test() {
     let account = await this.prisma.account.findUnique({
       where: { telegramId: 975314612 },
