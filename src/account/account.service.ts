@@ -3,6 +3,7 @@ import { PrismaService } from 'src/shared/services/prisma.service';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
 import { TopupWalletDto } from './dto/topup-wallet.dto';
 import { GetTopupApplications } from './dto/get-topup-applications.dto';
+import { TransactionStatus } from '@prisma/client';
 
 @Injectable()
 export class AccountService {
@@ -86,6 +87,24 @@ export class AccountService {
         data.amount,
       );
       if (result.status === 'success') {
+        const { applications } = await this.zephyr.getTopupApplications(
+          account.childUserId,
+          {
+            page: 1,
+            limit: 10,
+            status: 0,
+          },
+        );
+
+        await this.prisma.transaction.createMany({
+          data: applications.map((app) => ({
+            accountId: account.id,
+            status: TransactionStatus.PENDING,
+            zephyrId: app.id,
+            createdAt: new Date(app.createdAt),
+          })),
+          skipDuplicates: true,
+        });
         return result;
       } else {
         throw new HttpException(result.message, 400);

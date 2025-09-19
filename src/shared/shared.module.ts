@@ -5,6 +5,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { BotService } from './services/bot.service';
 import { ZephyrService } from './services/zephyr.service';
+import { TronService } from './services/tron.service';
 
 @Global()
 @Module({
@@ -13,6 +14,7 @@ import { ZephyrService } from './services/zephyr.service';
     PrismaService,
     BotService,
     ZephyrService,
+    TronService,
     CronService,
     JwtStrategy,
     JwtService,
@@ -21,6 +23,7 @@ import { ZephyrService } from './services/zephyr.service';
     PrismaService,
     BotService,
     ZephyrService,
+    TronService,
     CronService,
     JwtStrategy,
     JwtService,

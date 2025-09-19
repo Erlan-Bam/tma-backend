@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { CardModule } from './card/card.module';
 import { AdminModule } from './admin/admin.module';
 import * as Joi from 'joi';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import * as Joi from 'joi';
         limit: 150,
       },
     ]),
+    ScheduleModule.forRoot(),
     SharedModule,
     AccountModule,
     AuthModule,

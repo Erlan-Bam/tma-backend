@@ -10,7 +10,11 @@ import {
   randomUUID,
 } from 'crypto';
 import { GetTopupApplications } from 'src/account/dto/get-topup-applications.dto';
-import { APPLICATION_STATUS, USED_SCENES } from '../types/zephyr.types';
+import {
+  APPLICATION_STATUS,
+  TopupApplications,
+  USED_SCENES,
+} from '../types/zephyr.types';
 import { CreateCardDto } from 'src/card/dto/create-card.dto';
 import { TopupCardDto } from 'src/card/dto/topup-card.dto';
 
@@ -92,7 +96,10 @@ export class ZephyrService {
     }
   }
 
-  async getTopupApplications(childUserId: string, query: GetTopupApplications) {
+  async getTopupApplications(
+    childUserId: string,
+    query?: GetTopupApplications,
+  ): Promise<TopupApplications> {
     try {
       const response = await this.sendRequest({
         childUserId: childUserId,
@@ -110,6 +117,7 @@ export class ZephyrService {
       if (response.code === 200) {
         return {
           applications: data.map((a: any) => ({
+            id: a.id,
             amount: a.applyAmount,
             currency: a.applyCurrency,
             status: APPLICATION_STATUS[a.status],
@@ -185,6 +193,10 @@ export class ZephyrService {
       });
 
       if (response.code === 200) {
+        const transactions = await this.getTopupApplications(childUserId, {
+          page: 1,
+          limit: 10,
+        });
         return {
           status: 'success',
           message: 'Successfully created topup application',
