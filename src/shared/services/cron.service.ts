@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { TransactionStatus } from '@prisma/client';
 import { PrismaService } from 'src/shared/services/prisma.service';
 
 @Injectable()
@@ -13,10 +14,10 @@ export class CronService {
     try {
       const transactions = await this.prisma.transaction.updateMany({
         where: {
-          status: 'PENDING',
-          createdAt: { lt: new Date(Date.now() - 60 * 1000) },
+          status: TransactionStatus.PENDING,
+          createdAt: { lt: new Date(Date.now() - 2 * 60 * 60_000) },
         },
-        data: { status: 'FAILED' },
+        data: { status: TransactionStatus.FAILED },
       });
 
       this.logger.log(`Expired transactions updated: ${transactions.count}`);
