@@ -41,9 +41,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       const welcomeMessage = `
 🌟 Welcome to Arctic Pay! 🌟
 
-Hi, ${firstName}! 👋
-${username ? `(${username})` : ''}
-
 💳 Managing your money is now easy.
 
 We leverage the financial and technological expertise of our team in Dubai and Hong Kong to develop solutions that provide clarity in every transaction and help you earn more, consistently.
