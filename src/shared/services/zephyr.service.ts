@@ -14,6 +14,7 @@ import {
   APPLICATION_STATUS,
   TopupApplications,
   USED_SCENES,
+  ZephyrTopupApplications,
 } from '../types/zephyr.types';
 import { CreateCardDto } from 'src/card/dto/create-card.dto';
 import { TopupCardDto } from 'src/card/dto/topup-card.dto';
@@ -176,6 +177,36 @@ export class ZephyrService {
     } catch (error) {
       this.logger.error(
         'Error from zephyr when getting card product list' + error,
+      );
+      throw error;
+    }
+  }
+
+  async getAllTopupApplications(
+    status?: number,
+    pageNum: number = 1,
+    pageSize: number = 100,
+  ) {
+    try {
+      const response = await this.sendRequest({
+        method: 'GET',
+        endpoint: '/open-api/wallet/child/topup/application',
+        params: {
+          status: status,
+          pageNum: pageNum,
+          pageSize: pageSize,
+        },
+      });
+
+      if (response.code === 200) {
+        const data: ZephyrTopupApplications[] = response.rows;
+        return {
+          applications: data,
+        };
+      }
+    } catch (error) {
+      this.logger.error(
+        'Error from zephyr when getting all topup applications' + error,
       );
       throw error;
     }
@@ -355,6 +386,34 @@ export class ZephyrService {
     }
   }
 
+  async rejectTopupApplication(applicationId: string) {
+    try {
+      const response = await this.sendRequest({
+        method: 'PUT',
+        endpoint: '/open-api/wallet/child/topup/application/audit',
+        body: {
+          id: applicationId,
+          status: 2,
+          remark: 'Expired',
+        },
+      });
+
+      if (response.code === 200) {
+        return {
+          status: 'success',
+          message: 'Successfully rejected topup application',
+        };
+      } else {
+        return { status: 'error', message: response.msg };
+      }
+    } catch (error) {
+      this.logger.error(
+        'Error from zephyr when rejecting topup application: ' + error,
+      );
+      throw error;
+    }
+  }
+
   async getActiveCards(childUserId: string) {
     try {
       const response = await this.sendRequest({
@@ -467,21 +526,24 @@ export class ZephyrService {
     params?: Record<string, any>;
     headers?: Record<string, string>;
   }) {
-    const [token, requestId] = await Promise.all([
-      this.getToken(childUserId),
-      this.getRequestId(),
-    ]);
+    const token = await this.getToken(childUserId);
+    this.logger.debug('Token:' + token);
 
-    this.logger.debug(`TOKEN: ${token}, REQUEST-ID: ${requestId}`);
     const config: AxiosRequestConfig = {
       headers: {
         ...headers,
         Accept: 'application/json',
         Authorization: `Bearer ${token}`,
-        'X-REQUEST-ID': requestId,
       },
       params: params,
     };
+    if (method !== 'GET') {
+      const requestId = await this.getRequestId();
+      config.headers = {
+        ...config.headers,
+        'X-REQUEST-ID': requestId,
+      };
+    }
     switch (method) {
       case 'GET': {
         const response = await this.zephyr.get(endpoint, config);

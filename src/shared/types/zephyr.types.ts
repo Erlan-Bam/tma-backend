@@ -25,3 +25,16 @@ export interface TopupApplications {
     payedAt: string;
   }[];
 }
+export interface ZephyrTopupApplications {
+  applyAmount: number;
+  applyCurrency: string;
+  balance: number;
+  createTime: string;
+  id: string;
+  payTime: string;
+  payVoucher: string;
+  remark: string;
+  status: 0 | 1 | 2;
+  userId: string;
+  userName: string;
+}

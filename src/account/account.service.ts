@@ -91,27 +91,35 @@ export class AccountService {
           account.childUserId,
           {
             page: 1,
-            limit: 10,
+            limit: 5,
             status: 0,
           },
         );
 
-        await this.prisma.transaction.createMany({
-          data: applications.map((app) => ({
-            accountId: account.id,
-            status: TransactionStatus.PENDING,
-            zephyrId: app.id,
-            createdAt: new Date(app.createdAt),
-          })),
-          skipDuplicates: true,
-        });
+        try {
+          await this.prisma.transaction.createMany({
+            data: applications.map((app) => ({
+              accountId: account.id,
+              status: TransactionStatus.PENDING,
+              zephyrId: app.id,
+              createdAt: new Date(app.createdAt),
+            })),
+            skipDuplicates: true,
+          });
+        } catch (error) {
+          this.logger.error(
+            `Error when creating transaction for accountId=${account.id}:` +
+              error,
+          );
+          throw new HttpException('Something went wrong', 500);
+        }
         return result;
       } else {
         throw new HttpException(result.message, 400);
       }
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      this.logger.error('Error when getting account by telegram id: ' + error);
+      this.logger.error('Error when topup wallet: ' + error);
       throw new HttpException('Something went wrong', 500);
     }
   }

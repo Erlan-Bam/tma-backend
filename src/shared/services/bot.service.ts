@@ -39,23 +39,23 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
 
       // Красивое приветственное сообщение
       const welcomeMessage = `
-🌟 **Welcome to Arctic Pay!** 🌟
+🌟 *Welcome to Arctic Pay!* 🌟
 
 Hi, ${firstName}! 👋
 ${username ? `(${username})` : ''}
 
-💳 **Managing your money is now easy.**
+💳 *Managing your money is now easy.*
 
 We leverage the financial and technological expertise of our team in Dubai and Hong Kong to develop solutions that provide clarity in every transaction and help you earn more, consistently.
 
-✨ **What you can do:**
+✨ *What you can do:*
 🔹 Create virtual cards instantly
 🔹 Secure payments worldwide  
 🔹 Real-time transaction monitoring
 🔹 Multi-currency support
 🔹 24/7 global acceptance
 
-🚀 **Ready to get started?**
+🚀 *Ready to get started?*
 Tap the button below to open your Arctic Pay wallet!
 
 Welcome to Arctic Pay, a new way to manage your finances! 💎
@@ -81,19 +81,19 @@ Welcome to Arctic Pay, a new way to manage your finances! 💎
     // Добавляем команду help
     this.bot.command('help', async (ctx) => {
       const helpMessage = `
-🔧 **Arctic Pay Commands**
+🔧 *Arctic Pay Commands*
 
 /start - Welcome message and open wallet
 /help - Show this help message
 /support - Contact support team
 /about - Learn more about Arctic Pay
 
-💡 **Quick Tips:**
+💡 *Quick Tips:*
 • Use the web app for full functionality
 • Your data is encrypted and secure
 • Need help? Just type /support
 
-🌐 **Visit our website:** arcticpay.io
+🌐 *Visit our website:* arcticpay.io
       `.trim();
 
       await ctx.reply(helpMessage, {
@@ -104,19 +104,19 @@ Welcome to Arctic Pay, a new way to manage your finances! 💎
     // Добавляем команду support
     this.bot.command('support', async (ctx) => {
       const supportMessage = `
-🆘 **Need Help?**
+🆘 *Need Help?*
 
 Our support team is here to assist you 24/7!
 
-📞 **Contact Options:**
+📞 *Contact Options:*
 • Support Chat: @arctic_pay_support
 • Email: support@arcticpay.io  
 • Help Center: arcticpay.io/help
 
-⏰ **Response Time:**
+⏰ *Response Time:*
 We typically respond within 2-4 hours
 
-🔒 **Security Note:**
+🔒 *Security Note:*
 Arctic Pay staff will never ask for your passwords or private keys in DMs.
       `.trim();
 
@@ -135,29 +135,29 @@ Arctic Pay staff will never ask for your passwords or private keys in DMs.
     // Добавляем команду about
     this.bot.command('about', async (ctx) => {
       const aboutMessage = `
-🏢 **About Arctic Pay**
+🏢 *About Arctic Pay*
 
 Arctic Pay is a next-generation financial platform that makes managing your money simple, secure, and globally accessible.
 
-🌍 **Our Mission:**
+🌍 *Our Mission:*
 To provide clarity in every transaction and help you earn more, consistently.
 
-🏙️ **Global Presence:**
+🏙️ *Global Presence:*
 • Dubai - Financial Hub
 • Hong Kong - Technology Center
 • Worldwide - Customer Support
 
-💼 **Our Expertise:**
+💼 *Our Expertise:*
 ✅ Advanced Financial Technology
 ✅ Blockchain Security
 ✅ Global Payment Processing
 ✅ Regulatory Compliance
 
-🔐 **Security First:**
+🔐 *Security First:*
 Your funds and data are protected by bank-level encryption and security measures.
 
-🌐 **Website:** arcticpay.io
-📱 **App:** Available in Telegram
+🌐 *Website:* arcticpay.io
+📱 *App:* Available in Telegram
       `.trim();
 
       await ctx.reply(aboutMessage, {
