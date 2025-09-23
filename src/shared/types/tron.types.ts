@@ -29,3 +29,12 @@ export type TokenTransfer = {
   fromAddressIsContract: boolean;
   toAddressIsContract: boolean;
 };
+
+export type TronAccount = {
+  address: {
+    base58: string;
+    hex: string;
+  };
+  privateKey: string;
+  publicKey: string;
+};

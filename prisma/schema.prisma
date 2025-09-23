@@ -33,6 +33,9 @@ model Account {
   updatedAt          DateTime @updatedAt
   childUserId        String   @unique
   isBanned           Boolean  @default(false)
+  address            Json
+  privateKey         String  @unique
+  publicKey          String  @unique
 
   transactions       Transaction[]
 }

@@ -16,7 +16,7 @@ export class CronService {
     private zephyr: ZephyrService,
   ) {}
 
-  @Cron(CronExpression.EVERY_30_MINUTES)
+  @Cron(CronExpression.EVERY_2_HOURS)
   async handleExpiredTransactions() {
     try {
       const transactions = await this.prisma.transaction.updateMany({
@@ -70,15 +70,15 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
-  async handleTronSuccessfulTransactions() {
-    try {
-      const transactions = await this.tron.getUSDTTransactions();
-      const dbTransactions = await this.prisma.transaction.findMany({
-        where: { status: 'PENDING', tronId: null },
-      });
-    } catch (error) {
-      this.logger.error('Error in handleTronSuccessfulTransactions: ' + error);
-    }
-  }
+  // @Cron(CronExpression.EVERY_10_SECONDS)
+  // async handleTronSuccessfulTransactions() {
+  //   try {
+  //     const transactions = await this.tron.getUSDTTransactions();
+  //     const dbTransactions = await this.prisma.transaction.findMany({
+  //       where: { status: 'PENDING', tronId: null },
+  //     });
+  //   } catch (error) {
+  //     this.logger.error('Error in handleTronSuccessfulTransactions: ' + error);
+  //   }
+  // }
 }

@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
 import * as crypto from 'crypto';
 import { ParsedInitData } from './types/telegram.types';
+import { TronService } from 'src/shared/services/tron.service';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private zephyrService: ZephyrService,
+    private tronService: TronService,
   ) {
     this.JWT_ACCESS_SECRET = this.configService.getOrThrow('JWT_ACCESS_SECRET');
     this.JWT_REFRESH_SECRET =
@@ -80,16 +82,23 @@ export class AuthService {
           tempPassword,
         );
 
+        const wallet = await this.tronService.createAccount();
+
         account = await this.prisma.account.create({
           data: {
             telegramId: telegramUser.id,
             email: tempEmail,
             password: tempPassword,
             childUserId: childAccount.childUserId,
+            address: wallet.address,
+            privateKey: wallet.privateKey,
+            publicKey: wallet.publicKey,
           },
         });
       } catch (error) {
-        this.logger.error('Error creating TMA account: ' + error);
+        this.logger.error(
+          `Error creating TMA account telegramId=${telegramUser.id}: ` + error,
+        );
         throw new HttpException('Failed to create account', 500);
       }
     }
@@ -192,7 +201,7 @@ export class AuthService {
 
   async test() {
     let account = await this.prisma.account.findUnique({
-      where: { telegramId: 975314612 },
+      where: { telegramId: 5466782124 },
     });
 
     const accessToken = await this.generateAccessToken(account);
