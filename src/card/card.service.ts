@@ -42,6 +42,72 @@ export class CardService {
     }
   }
 
+  async getCardCvv(id: string, cardId: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: id },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      return await this.zephyr.getCardCvv(account.childUserId, cardId);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        `Error when getting card cvv for userId=${id}, cardId=${cardId}, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async getCardExpiry(id: string, cardId: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: id },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      return await this.zephyr.getCardExpiry(account.childUserId, cardId);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        `Error when getting card expiry for userId=${id}, cardId=${cardId}, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async getCardNumber(id: string, cardId: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: id },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      return await this.zephyr.getCardNumber(account.childUserId, cardId);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        `Error when getting card number for userId=${id}, cardId=${cardId}, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
   async createCard(id: string, createCardDto: CreateCardDto) {
     try {
       const account = await this.prisma.account.findUnique({

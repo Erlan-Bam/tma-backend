@@ -212,6 +212,72 @@ export class ZephyrService {
     }
   }
 
+  async getCardCvv(childUserId: string, cardId: string) {
+    try {
+      const response = await this.sendRequest({
+        method: 'GET',
+        endpoint: `/open-api/child/card/look/cvv/${cardId}`,
+        childUserId: childUserId,
+      });
+
+      if (response.code === 200) {
+        return { cvv: response.data };
+      } else {
+        this.logger.debug(
+          `Getting card cvv resulted in operation not successful, response: ${JSON.stringify(response)}`,
+        );
+        throw new Error('Operation not successful');
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when getting card cvv: ' + error);
+      throw error;
+    }
+  }
+
+  async getCardExpiry(childUserId: string, cardId: string) {
+    try {
+      const response = await this.sendRequest({
+        method: 'GET',
+        endpoint: `/open-api/child/card/look/expiry/${cardId}`,
+        childUserId: childUserId,
+      });
+
+      if (response.code === 200) {
+        return { expiry: response.data };
+      } else {
+        this.logger.debug(
+          `Getting card expiry resulted in operation not successful, response: ${JSON.stringify(response)}`,
+        );
+        throw new Error('Operation not successful');
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when getting card expiry: ' + error);
+      throw error;
+    }
+  }
+
+  async getCardNumber(childUserId: string, cardId: string) {
+    try {
+      const response = await this.sendRequest({
+        method: 'GET',
+        endpoint: `/open-api/child/card/look/cardNo/${cardId}`,
+        childUserId: childUserId,
+      });
+
+      if (response.code === 200) {
+        return { number: response.data };
+      } else {
+        this.logger.debug(
+          `Getting card number resulted in operation not successful, response: ${JSON.stringify(response)}`,
+        );
+        throw new Error('Operation not successful');
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when getting card number: ' + error);
+      throw error;
+    }
+  }
+
   async topupWallet(childUserId: string, amount: number) {
     try {
       const response = await this.sendRequest({

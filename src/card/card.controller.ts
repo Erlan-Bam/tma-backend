@@ -41,6 +41,21 @@ export class CardController {
     return await this.cardService.getActiveCards(userId);
   }
 
+  @Get('cvv/:id')
+  async getCardCvv(@Param('id') cardId: string, @User('id') userId: string) {
+    return await this.cardService.getCardCvv(userId, cardId);
+  }
+
+  @Get('expiry/:id')
+  async getCardExpiry(@Param('id') cardId: string, @User('id') userId: string) {
+    return await this.cardService.getCardExpiry(userId, cardId);
+  }
+
+  @Get('number/:id')
+  async getCardNumber(@Param('id') cardId: string, @User('id') userId: string) {
+    return await this.cardService.getCardNumber(userId, cardId);
+  }
+
   @Get('info/:id')
   async getCardInfo(@Param('id') cardId: string, @User('id') userId: string) {
     return await this.cardService.getCardInfo(userId, cardId);
