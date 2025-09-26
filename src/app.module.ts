@@ -6,8 +6,11 @@ import { AccountModule } from './account/account.module';
 import { AuthModule } from './auth/auth.module';
 import { CardModule } from './card/card.module';
 import { AdminModule } from './admin/admin.module';
+import { HealthModule } from './health/health.module';
 import * as Joi from 'joi';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TransactionModule } from './transaction/transaction.module';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -35,6 +38,11 @@ import { ScheduleModule } from '@nestjs/schedule';
             'https://dev-docs-v2821.zephyrcards.com',
           )
           .required(),
+        TRON_API_KEY: Joi.string().required(),
+        TRON_WALLET_ADDRESS: Joi.string().required(),
+        REDIS_HOST: Joi.string().default('localhost'),
+        REDIS_PORT: Joi.number().default(6379),
+        REDIS_PASSWORD: Joi.string().optional(),
       }),
       validationOptions: { allowUnknown: true, abortEarly: true },
     }),
@@ -45,11 +53,22 @@ import { ScheduleModule } from '@nestjs/schedule';
       },
     ]),
     ScheduleModule.forRoot(),
+    BullModule.forRoot({
+      redis: {
+        host: process.env.REDIS_HOST,
+        port: parseInt(process.env.REDIS_PORT),
+        password: process.env.REDIS_PASSWORD,
+        maxRetriesPerRequest: 3,
+        lazyConnect: true,
+      },
+    }),
     SharedModule,
     AccountModule,
     AuthModule,
     CardModule,
     AdminModule,
+    HealthModule,
+    TransactionModule,
   ],
 })
 export class AppModule {}

@@ -31,10 +31,12 @@ export type TokenTransfer = {
 };
 
 export type TronAccount = {
-  address: {
-    base58: string;
-    hex: string;
-  };
+  address: TronAddress;
   privateKey: string;
   publicKey: string;
+};
+
+export type TronAddress = {
+  base58: string;
+  hex: string;
 };

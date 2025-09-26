@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { TransactionStatus } from '@prisma/client';
 import { PrismaService } from 'src/shared/services/prisma.service';
-import { TronService } from './tron.service';
 import { ZephyrService } from './zephyr.service';
 
 @Injectable()
@@ -12,7 +11,6 @@ export class CronService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private tron: TronService,
     private zephyr: ZephyrService,
   ) {}
 
@@ -69,16 +67,4 @@ export class CronService {
       this.logger.error('Error in handleExpiredTopupApplications: ' + error);
     }
   }
-
-  // @Cron(CronExpression.EVERY_10_SECONDS)
-  // async handleTronSuccessfulTransactions() {
-  //   try {
-  //     const transactions = await this.tron.getUSDTTransactions();
-  //     const dbTransactions = await this.prisma.transaction.findMany({
-  //       where: { status: 'PENDING', tronId: null },
-  //     });
-  //   } catch (error) {
-  //     this.logger.error('Error in handleTronSuccessfulTransactions: ' + error);
-  //   }
-  // }
 }

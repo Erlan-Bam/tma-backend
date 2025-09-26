@@ -290,10 +290,6 @@ export class ZephyrService {
       });
 
       if (response.code === 200) {
-        const transactions = await this.getTopupApplications(childUserId, {
-          page: 1,
-          limit: 10,
-        });
         return {
           status: 'success',
           message: 'Successfully created topup application',
@@ -453,6 +449,34 @@ export class ZephyrService {
   }
 
   async rejectTopupApplication(applicationId: string) {
+    try {
+      const response = await this.sendRequest({
+        method: 'PUT',
+        endpoint: '/open-api/wallet/child/topup/application/audit',
+        body: {
+          id: applicationId,
+          status: 2,
+          remark: 'Expired',
+        },
+      });
+
+      if (response.code === 200) {
+        return {
+          status: 'success',
+          message: 'Successfully rejected topup application',
+        };
+      } else {
+        return { status: 'error', message: response.msg };
+      }
+    } catch (error) {
+      this.logger.error(
+        'Error from zephyr when rejecting topup application: ' + error,
+      );
+      throw error;
+    }
+  }
+
+  async acceptTopupApplication(applicationId: string) {
     try {
       const response = await this.sendRequest({
         method: 'PUT',

@@ -1,0 +1,101 @@
+version: "3.8"
+
+services:
+  # Redis for Bull Queue management
+  redis:
+    image: redis:7-alpine
+    container_name: tma-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --replica-read-only no
+    volumes:
+      - redis_data:/data
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    networks:
+      - tma-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: tma-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: tma_backend
+      POSTGRES_USER: tma_user
+      POSTGRES_PASSWORD: tma_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tma-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tma_user -d tma_backend"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # TMA Backend Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tma-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://tma_user:tma_password@postgres:5432/tma_backend
+      REDIS_URL: redis://redis:6379
+      # Add your environment variables here
+      TRON_API_KEY: ${TRON_API_KEY}
+      TRON_WALLET_ADDRESS: ${TRON_WALLET_ADDRESS}
+      JWT_SECRET: ${JWT_SECRET}
+    networks:
+      - tma-network
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Commander for Queue Management (Development only)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: tma-redis-commander
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+    networks:
+      - tma-network
+    profiles:
+      - dev
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  tma-network:
+    driver: bridge
