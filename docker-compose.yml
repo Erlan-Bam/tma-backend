@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # Redis for Bull Queue management
   redis:
@@ -21,27 +19,6 @@ services:
       timeout: 3s
       retries: 3
 
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: tma-postgres
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_DB: tma_backend
-      POSTGRES_USER: tma_user
-      POSTGRES_PASSWORD: tma_password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - tma-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tma_user -d tma_backend"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-
   # TMA Backend Application
   app:
     build:
@@ -52,18 +29,24 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
-        condition: service_healthy
+        condition: service_started
     environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://tma_user:tma_password@postgres:5432/tma_backend
+      NODE_ENV: development
+      DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: redis://redis:6379
-      # Add your environment variables here
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      FRONTEND_URL: ${FRONTEND_URL}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      ZEPHYR_SECRET_KEY: ${ZEPHYR_SECRET_KEY}
+      ZEPHYR_BASE_URL: ${ZEPHYR_BASE_URL}
+      ZEPHYR_LICENSE_KEY: ${ZEPHYR_LICENSE_KEY}
       TRON_API_KEY: ${TRON_API_KEY}
       TRON_WALLET_ADDRESS: ${TRON_WALLET_ADDRESS}
-      JWT_SECRET: ${JWT_SECRET}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     networks:
       - tma-network
     volumes:

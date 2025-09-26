@@ -12,6 +12,11 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 export class AccountController {
   constructor(private accountService: AccountService) {}
 
+  @Post('topup')
+  async topupWallet(@User('id') userId: string) {
+    return await this.accountService.topupWallet(userId);
+  }
+
   @Get('')
   async getAccountById(@User('id') userId: string) {
     return await this.accountService.getAccountById(userId);

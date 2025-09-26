@@ -8,7 +8,6 @@ export class HealthController {
   @Get()
   async checkHealth() {
     try {
-      // Test database connection
       await this.prisma.$queryRaw`SELECT 1`;
 
       return {

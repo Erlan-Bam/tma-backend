@@ -2,7 +2,7 @@ import { InjectQueue, Process, Processor } from '@nestjs/bull';
 import { Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { Job, Queue } from 'bull';
 import { PrismaService } from 'src/shared/services/prisma.service';
-import { TronService } from './services/tron.service';
+import { TransactionTronService } from './services/tron.service';
 import { MonitorBatchJob, SuccessfulTransactionJob } from './types/queue.types';
 import { Account, TransactionStatus } from '@prisma/client';
 import { TronAddress } from './types/tron.types';
@@ -14,7 +14,7 @@ export class TransactionQueue {
 
   constructor(
     private prisma: PrismaService,
-    private tron: TronService,
+    private tron: TransactionTronService,
     private zephyr: ZephyrService,
     @InjectQueue('transaction-queue') private queue: Queue,
   ) {}
@@ -29,10 +29,6 @@ export class TransactionQueue {
       );
 
       const accounts = await this.prisma.account.findMany({
-        where: {
-          address: { not: null },
-          childUserId: { not: null },
-        },
         select: {
           id: true,
           address: true,

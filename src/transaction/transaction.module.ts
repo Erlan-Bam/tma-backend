@@ -1,5 +1,9 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
+import { TransactionCronService } from './services/cron.service';
+import { TransactionTronService } from './services/tron.service';
+import { TransactionQueue } from './transaction.queue';
+
 @Module({
   imports: [
     BullModule.registerQueue({
@@ -15,5 +19,6 @@ import { BullModule } from '@nestjs/bull';
       },
     }),
   ],
+  providers: [TransactionCronService, TransactionTronService, TransactionQueue],
 })
 export class TransactionModule {}

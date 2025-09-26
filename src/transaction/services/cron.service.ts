@@ -18,12 +18,7 @@ export class TransactionCronService {
   @Cron(CronExpression.EVERY_MINUTE)
   async handleWalletMonitoring() {
     try {
-      const wallets = await this.prisma.account.count({
-        where: {
-          address: { not: null },
-          childUserId: { not: null },
-        },
-      });
+      const wallets = await this.prisma.account.count();
 
       this.logger.log(`📊 Scheduling monitoring for ${wallets} wallets`);
 
@@ -35,7 +30,7 @@ export class TransactionCronService {
         await this.queue.add(
           'monitor-wallet-batch',
           {
-            batchIndex,
+            batchIndex: batchIndex,
             batchSize: this.BATCH_SIZE,
             offset: batchIndex * this.BATCH_SIZE,
           },

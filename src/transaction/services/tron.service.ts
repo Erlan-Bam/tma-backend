@@ -5,8 +5,8 @@ import { TokenTransfer } from '../types/tron.types';
 import { TronWeb } from 'tronweb';
 
 @Injectable()
-export class TronService {
-  private readonly logger = new Logger(TronService.name);
+export class TransactionTronService {
+  private readonly logger = new Logger(TransactionTronService.name);
   private readonly tron: AxiosInstance;
   private readonly TRON_API_KEY: string;
   private readonly MAIN_WALLET: string;
