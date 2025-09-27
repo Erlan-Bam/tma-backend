@@ -67,7 +67,7 @@ export class TransactionQueue {
 
   @Process('successful-transaction')
   async handleSuccessfulTransaction(job: Job<SuccessfulTransactionJob>) {
-    const { account, amount, tronId, timestamp } = job.data;
+    const { account, amount, tronId } = job.data;
     const accountId = account.id;
 
     try {
@@ -113,20 +113,31 @@ export class TransactionQueue {
               this.logger.debug(
                 `Matched application ${app.id} with amount ${app.amount}`,
               );
-              const transaction = await tx.transaction.create({
-                data: {
-                  accountId: accountId,
-                  tronId: tronId,
-                  status: TransactionStatus.SUCCESS,
-                  zephyrId: app.id,
-                },
-              });
-              return {
-                status: 'success',
-                message: `Topup application ${app.id} matched successfully`,
-                transation: transaction,
-                applications: applications,
-              };
+              try {
+                const transaction = await tx.transaction.upsert({
+                  where: { tronId: tronId },
+                  update: {},
+                  create: {
+                    accountId: accountId,
+                    tronId: tronId,
+                    status: TransactionStatus.SUCCESS,
+                    zephyrId: app.id,
+                  },
+                });
+                await this.zephyr.acceptTopupApplication(app.id);
+                return {
+                  status: 'success',
+                  message: `Topup application ${app.id} matched successfully`,
+                  transation: transaction,
+                  applications: applications,
+                };
+              } catch (error) {
+                this.logger.error(
+                  `Error creating transaction or accepting application ${app.id}:`,
+                  error?.message || error,
+                );
+                throw error;
+              }
             }
           }
 
@@ -156,6 +167,8 @@ export class TransactionQueue {
         `❌ Error processing successful transaction for account ${accountId}:`,
         error?.message || error,
       );
+
+      throw error;
     }
   }
 
@@ -244,7 +257,6 @@ export class TransactionQueue {
                 account: account,
                 amount: tx.amount,
                 tronId: tx.tronId,
-                timestamp: tx.timestamp,
               },
               {
                 attempts: 5,
@@ -255,6 +267,7 @@ export class TransactionQueue {
                 removeOnComplete: 100,
                 removeOnFail: 50,
                 delay: 1000,
+                jobId: `tx-${tx.tronId}`,
               },
             );
           }
