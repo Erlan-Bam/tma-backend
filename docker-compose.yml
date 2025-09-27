@@ -34,7 +34,6 @@ services:
     environment:
       NODE_ENV: development
       DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: redis://redis:6379
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       FRONTEND_URL: ${FRONTEND_URL}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}

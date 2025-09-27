@@ -7,8 +7,8 @@ import { InjectQueue } from '@nestjs/bull';
 @Injectable()
 export class TransactionCronService {
   private readonly logger = new Logger(TransactionCronService.name);
-  private readonly BATCH_SIZE = 4;
-  private readonly CONCURRENT_BATCHES = 1;
+  private readonly BATCH_SIZE = 5;
+  private readonly CONCURRENT_BATCHES = 2;
 
   constructor(
     private readonly prisma: PrismaService,

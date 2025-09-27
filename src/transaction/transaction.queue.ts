@@ -10,6 +10,7 @@ import { ZephyrService } from 'src/shared/services/zephyr.service';
 
 @Processor('transaction-queue')
 export class TransactionQueue {
+  private isWaiting = false;
   private readonly logger = new Logger(TransactionQueue.name);
 
   constructor(
@@ -18,6 +19,14 @@ export class TransactionQueue {
     private zephyr: ZephyrService,
     @InjectQueue('transaction-queue') private queue: Queue,
   ) {}
+
+  private isRateLimitError(error: any): boolean {
+    return (
+      error?.response?.status === 429 ||
+      error?.status === 429 ||
+      error?.code === 'ERR_TOO_MANY_REQUESTS'
+    );
+  }
 
   @Process('monitor-wallet-batch')
   async handleWalletBatch(job: Job<MonitorBatchJob>) {
@@ -147,12 +156,6 @@ export class TransactionQueue {
         `❌ Error processing successful transaction for account ${accountId}:`,
         error?.message || error,
       );
-
-      // Re-throw the error to trigger job retry
-      throw new HttpException(
-        `Failed to process transaction for account ${accountId}: ${error?.message || 'Unknown error'}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
     }
   }
 
@@ -164,19 +167,44 @@ export class TransactionQueue {
     const RATE_LIMIT_DELAY = 2000;
 
     for (let i = 0; i < accounts.length; i += CHUNK_SIZE) {
+      if (this.isWaiting) {
+        this.logger.warn('⏸️ Waiting due to rate limit (429)...');
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        this.isWaiting = false;
+        this.logger.log('▶️ Resuming processing after rate limit wait');
+      }
+
       const chunk = accounts.slice(i, i + CHUNK_SIZE);
 
-      await Promise.allSettled(
+      const results = await Promise.allSettled(
         chunk.map(async (account) => {
           try {
             await this.processAccountTransactions(account);
             processed++;
           } catch (error) {
+            if (this.isRateLimitError(error)) {
+              this.logger.warn(
+                `⏸️ Rate limit detected for account ${account.id}, setting wait flag`,
+              );
+              this.isWaiting = true;
+            }
             this.logger.error(`Error processing account ${account.id}:`, error);
             errors++;
           }
         }),
       );
+
+      results.forEach((result) => {
+        if (result.status === 'rejected') {
+          const error = result.reason;
+          if (this.isRateLimitError(error)) {
+            this.logger.warn(
+              `⏸️ Rate limit detected in batch processing, setting wait flag`,
+            );
+            this.isWaiting = true;
+          }
+        }
+      });
 
       if (i + CHUNK_SIZE < accounts.length) {
         await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY));
@@ -194,48 +222,57 @@ export class TransactionQueue {
 
     const address = account.address as TronAddress;
 
-    const transactions = await this.tron.getWalletUSDTTransactions(
-      address.base58,
-    );
+    try {
+      const transactions = await this.tron.getWalletUSDTTransactions(
+        address.base58,
+      );
 
-    for (const tx of transactions) {
-      try {
-        const exist = await this.prisma.transaction.findUnique({
-          where: { tronId: tx.tronId },
-        });
+      for (const tx of transactions) {
+        try {
+          const exist = await this.prisma.transaction.findUnique({
+            where: { tronId: tx.tronId },
+          });
 
-        if (!exist) {
-          this.logger.log(
-            `💰 New transaction found: ${tx.tronId} - ${tx.amount} USDT for account ${account.id}`,
-          );
+          if (!exist) {
+            this.logger.log(
+              `💰 New transaction found: ${tx.tronId} - ${tx.amount} USDT for account ${account.id}`,
+            );
 
-          await this.queue.add(
-            'successful-transaction',
-            {
-              account: account,
-              amount: tx.amount,
-              tronId: tx.tronId,
-              timestamp: tx.timestamp,
-            },
-            {
-              attempts: 5,
-              backoff: {
-                type: 'exponential',
-                delay: 2000,
+            await this.queue.add(
+              'successful-transaction',
+              {
+                account: account,
+                amount: tx.amount,
+                tronId: tx.tronId,
+                timestamp: tx.timestamp,
               },
-              removeOnComplete: 100,
-              removeOnFail: 50,
-              delay: 1000,
-            },
+              {
+                attempts: 5,
+                backoff: {
+                  type: 'exponential',
+                  delay: 2000,
+                },
+                removeOnComplete: 100,
+                removeOnFail: 50,
+                delay: 1000,
+              },
+            );
+          }
+        } catch (error) {
+          this.logger.error(
+            `Error checking/queuing transaction ${tx.tronId}:`,
+            error?.message,
           );
         }
-      } catch (error) {
-        this.logger.error(
-          `Error checking/queuing transaction ${tx.tronId}:`,
-          error?.message,
-        );
-        // Continue with other transactions even if one fails
       }
+    } catch (error) {
+      if (this.isRateLimitError(error)) {
+        this.logger.warn(
+          `⏸️ Rate limit detected when fetching transactions for account ${account.id}`,
+        );
+        this.isWaiting = true;
+      }
+      throw error;
     }
   }
 }
