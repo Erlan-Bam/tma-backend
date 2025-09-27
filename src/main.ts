@@ -37,8 +37,8 @@ async function bootstrap() {
 
   if (NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
-      .setTitle('Barcode API')
-      .setDescription('Barcode endpoints')
+      .setTitle('Arctic pay API')
+      .setDescription('Arctic pay API endpoints')
       .setVersion('1.0')
       .addBearerAuth(
         {

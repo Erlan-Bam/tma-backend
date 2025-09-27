@@ -42,7 +42,7 @@ services:
       redis:
         condition: service_started
     environment:
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV}
       DATABASE_URL: ${DATABASE_URL}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       FRONTEND_URL: ${FRONTEND_URL}
