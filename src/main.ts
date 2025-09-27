@@ -11,9 +11,12 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 };
 
 async function bootstrap() {
+  const NODE_ENV = process.env.NODE_ENV;
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
-  app.setGlobalPrefix('api');
+  if (NODE_ENV !== 'production') {
+    app.setGlobalPrefix('api');
+  }
   app.enableCors({
     origin: [
       'http://localhost:3000',
@@ -32,7 +35,6 @@ async function bootstrap() {
     exposedHeaders: ['Authorization'],
   });
 
-  const NODE_ENV = process.env.NODE_ENV;
   if (NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('Barcode API')
