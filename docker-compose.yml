@@ -1,5 +1,4 @@
 services:
-  # Redis for Bull Queue management
   redis:
     image: redis:7-alpine
     container_name: tma-redis
@@ -14,6 +13,8 @@ services:
     command: redis-server --appendonly yes --replica-read-only no
     volumes:
       - redis_data:/data
+      - ./logs:/app/logs
+      - ./container-logs:/var/log/app
     environment:
       - REDIS_REPLICATION_MODE=master
     networks:
@@ -24,7 +25,6 @@ services:
       timeout: 3s
       retries: 3
 
-  # TMA Backend Application
   app:
     build:
       context: .
@@ -37,7 +37,7 @@ services:
         max-size: "10m"
         max-file: "3"
     ports:
-      - "3000:3000"
+      - "6001:6001"
     depends_on:
       redis:
         condition: service_started
@@ -65,25 +65,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # Redis Commander for Queue Management (Development only)
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: tma-redis-commander
-    restart: unless-stopped
-    ports:
-      - "8081:8081"
-    environment:
-      - REDIS_HOSTS=local:redis:6379
-    depends_on:
-      - redis
-    networks:
-      - tma-network
-    profiles:
-      - dev
-
 volumes:
-  postgres_data:
-    driver: local
   redis_data:
     driver: local
 
