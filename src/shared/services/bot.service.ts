@@ -164,7 +164,6 @@ Your funds and data are protected by bank-level encryption and security measures
   }
 
   async onModuleInit() {
-    this.logger.debug('Initializing Telegram bot...');
     try {
       this.bot.start({
         drop_pending_updates: true,
