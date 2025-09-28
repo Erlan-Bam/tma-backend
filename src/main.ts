@@ -5,11 +5,6 @@ import { AppModule } from './app.module';
 import { BadRequestException, Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-// Глобальный серализатор для BigInt
-(BigInt.prototype as any).toJSON = function () {
-  return this.toString();
-};
-
 async function bootstrap() {
   const NODE_ENV = process.env.NODE_ENV;
   const app = await NestFactory.create(AppModule);

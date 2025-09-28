@@ -9,18 +9,19 @@ services:
         max-size: "10m"
         max-file: "3"
     ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes --replica-read-only no
+      - "127.0.0.1:6379:6379"
+    command: redis-server --appendonly yes --replica-read-only no --requirepass "${REDIS_PASSWORD}"
     volumes:
       - redis_data:/data
       - ./logs:/app/logs
       - ./container-logs:/var/log/app
     environment:
       - REDIS_REPLICATION_MODE=master
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     networks:
       - tma-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -55,6 +56,7 @@ services:
       TRON_WALLET_ADDRESS: ${TRON_WALLET_ADDRESS}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     networks:
       - tma-network
     volumes:

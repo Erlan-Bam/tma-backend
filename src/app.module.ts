@@ -42,6 +42,7 @@ import { BullModule } from '@nestjs/bull';
         TRON_WALLET_ADDRESS: Joi.string().required(),
         REDIS_HOST: Joi.string().default('localhost'),
         REDIS_PORT: Joi.number().default(6379),
+        REDIS_PASSWORD: Joi.string().required(),
       }),
       validationOptions: { allowUnknown: true, abortEarly: true },
     }),
