@@ -68,7 +68,7 @@ export class ZephyrService {
       throw error;
     }
   }
-
+  //NEEDS FIX
   async getAccountBalance(childUserId: string) {
     try {
       const response = await this.sendRequest({

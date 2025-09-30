@@ -15,6 +15,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'https://tma-frontend-production-1702.up.railway.app',
+      'https://miniapp.arcticpay.app',
       'http://localhost:3000',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
