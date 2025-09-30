@@ -265,7 +265,13 @@ export class CardService {
       this.logger.debug(
         `Getting card info for cardId=${cardId}, account: ` + account,
       );
-      return await this.zephyr.getCardInfo(account.childUserId, cardId);
+
+      const result = await this.zephyr.getCardInfo(account.childUserId, cardId);
+      if (result.status === 'error') {
+        throw new HttpException(result.msg, 400);
+      } else {
+        return result;
+      }
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;

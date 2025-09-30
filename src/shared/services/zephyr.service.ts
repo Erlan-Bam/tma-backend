@@ -440,10 +440,10 @@ export class ZephyrService {
           usedScenes: data.usedScenes,
         };
       } else {
-        this.logger.debug(
-          `Getting card info resulted in operation not successful, response: ${JSON.stringify(response)}`,
-        );
-        throw new Error('Operation not successful');
+        return {
+          status: 'error',
+          msg: response.msg,
+        };
       }
     } catch (error) {
       this.logger.error('Error from zephyr when getting card info: ' + error);
