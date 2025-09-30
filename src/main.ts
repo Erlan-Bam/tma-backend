@@ -14,7 +14,7 @@ async function bootstrap() {
   }
   app.enableCors({
     origin: [
-      'tma-frontend-production-1702.up.railway.app',
+      'https://tma-frontend-production-1702.up.railway.app',
       'http://localhost:3000',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
