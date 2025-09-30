@@ -46,4 +46,9 @@ export class AdminController {
   async enableUser(@Param('userId', ParseUUIDPipe) userId: string) {
     return await this.adminService.enableUser(userId);
   }
+
+  @Post('transfer/:userId')
+  async transferUSDT(@Param('userId', ParseUUIDPipe) userId: string) {
+    return await this.adminService.transferUSDT(userId);
+  }
 }

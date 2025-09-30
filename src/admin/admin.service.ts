@@ -1,6 +1,8 @@
 import { HttpException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/shared/services/prisma.service';
+import { TronService } from 'src/shared/services/tron.service';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
+import { TronAddress } from 'src/transaction/types/tron.types';
 
 @Injectable()
 export class AdminService {
@@ -8,6 +10,7 @@ export class AdminService {
   constructor(
     private zephyr: ZephyrService,
     private prisma: PrismaService,
+    private tron: TronService,
   ) {}
 
   async getAllCards() {
@@ -88,13 +91,6 @@ export class AdminService {
         throw new HttpException('Account not found', 404);
       }
 
-      if (!account.childUserId) {
-        throw new HttpException(
-          'Zephyr integration not available for this account',
-          400,
-        );
-      }
-
       await this.prisma.account.update({
         where: { id: userId },
         data: { isBanned: true },
@@ -127,13 +123,6 @@ export class AdminService {
         throw new HttpException('Account not found', 404);
       }
 
-      if (!account.childUserId) {
-        throw new HttpException(
-          'Zephyr integration not available for this account',
-          400,
-        );
-      }
-
       await this.prisma.account.update({
         where: { id: userId },
         data: { isBanned: false },
@@ -152,6 +141,34 @@ export class AdminService {
       }
       this.logger.error(
         `Error when enabling user userId=${userId}, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async transferUSDT(userId: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: userId },
+        select: { address: true, privateKey: true },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      const address = account.address as TronAddress;
+
+      return await this.tron.transferUSDTToMainWallet({
+        address: address.base58,
+        privateKey: account.privateKey,
+      });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        `Error when transferring USDT for userId=${userId}, error: ${error}`,
       );
       throw new HttpException('Something Went Wrong', 500);
     }

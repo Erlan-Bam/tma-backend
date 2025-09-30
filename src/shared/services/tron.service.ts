@@ -6,6 +6,7 @@ import { TronWeb } from 'tronweb';
 
 @Injectable()
 export class TronService {
+  private readonly USDT_CONTRACT_ADDRESS = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
   private readonly logger = new Logger(TronService.name);
   private readonly tron: AxiosInstance;
   private readonly TRON_API_KEY: string;
@@ -55,5 +56,65 @@ export class TronService {
     const result = `${whole}.${fractionStr}`;
 
     return Number(result).toFixed(2);
+  }
+
+  async getUSDTBalance(address: string) {
+    try {
+      const contract = await this.tronweb
+        .contract()
+        .at(this.USDT_CONTRACT_ADDRESS);
+      const balance = await contract.balanceOf(address).call();
+      return { balance: balance / 1000000, contract: contract };
+    } catch (error) {
+      this.logger.error(`Error getting USDT balance for ${address}:`, error);
+      throw new Error(`Failed to get USDT balance: ${error.message}`);
+    }
+  }
+
+  async transferUSDTToMainWallet(data: {
+    address: string;
+    privateKey: string;
+  }) {
+    try {
+      const { address, privateKey } = data;
+
+      this.tronweb.setPrivateKey(privateKey);
+
+      const contract = await this.tronweb
+        .contract()
+        .at(this.USDT_CONTRACT_ADDRESS);
+      const balance = await contract.balanceOf(address).call();
+
+      if (balance <= 10000) {
+        return {
+          success: false,
+          message: 'No USDT balance to transfer',
+          balance: 0,
+        };
+      }
+
+      const transaction = await contract
+        .transfer(this.MAIN_WALLET, balance)
+        .send({
+          from: address,
+          callValue: 0,
+        });
+
+      this.logger.log(
+        `USDT transfer successful: ${transaction} - Amount: ${balance / 1000000} USDT`,
+      );
+
+      return {
+        success: true,
+        transaction: transaction,
+        balance: balance / 1000000,
+        fromAddress: address,
+        toAddress: this.MAIN_WALLET,
+        message: 'USDT transferred successfully to main wallet',
+      };
+    } catch (error) {
+      this.logger.error('Error transferring USDT:', error);
+      throw new Error(`Failed to transfer USDT: ${error.message}`);
+    }
   }
 }
