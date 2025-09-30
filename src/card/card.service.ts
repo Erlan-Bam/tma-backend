@@ -16,6 +16,7 @@ export class CardService {
     try {
       const account = await this.prisma.account.findUnique({
         where: { id: id },
+        select: { childUserId: true },
       });
 
       if (!account) {

@@ -157,14 +157,14 @@ export class ZephyrService {
       if (response.code === 200) {
         return {
           cards: data.map((c: any) => ({
-            organization: String(c.organization || ''),
-            cardArea: String(c.cardArea || ''),
-            cardBinId: String(c.cardBinId || ''),
-            currency: String(c.currency || 'USD'),
-            price: Number(c.price) || 0,
-            minOpenAmount: Number(c.minOpenAmount) || 0,
-            maxOpenAmount: Number(c.maxOpenAmount) || 0,
-            usedScenes: String(c.usedScenes || ''),
+            organization: c.organization,
+            cardArea: c.cardArea,
+            cardBinId: c.cardBinId,
+            currency: c.currency,
+            price: c.price,
+            minOpenAmount: c.minOpenAmount,
+            maxOpenAmount: c.maxOpenAmount,
+            usedScenes: c.usedScenes,
           })),
           usedSceneDescription: USED_SCENES,
         };
@@ -515,18 +515,18 @@ export class ZephyrService {
       if (response.code === 200) {
         return {
           cards: response.rows.map((card: any) => ({
-            id: String(card.id), // Convert to string to avoid BigInt serialization issues
-            cardNo: String(card.cardNo),
-            label: String(card.label || ''),
-            balance: Number(card.balance) || 0, // Convert to number
-            currency: String(card.currency || 'USD'),
-            status: Number(card.status) || 0,
-            activateDate: String(card.activateDate || ''),
-            minTopupAmount: Number(card.minTopupAmount) || 0,
-            maxTopupAmount: Number(card.maxTopupAmount) || 0,
-            usedScenes: String(card.usedScenes || ''),
+            id: card.id,
+            cardNo: card.cardNo,
+            label: card.label,
+            balance: card.balance,
+            currency: card.currency,
+            status: card.status,
+            activateDate: card.activateDate,
+            minTopupAmount: card.minTopupAmount,
+            maxTopupAmount: card.maxTopupAmount,
+            usedScenes: card.usedScenes || '',
           })),
-          total: Number(response.total) || 0,
+          total: response.total,
         };
       } else {
         this.logger.debug(
@@ -694,20 +694,20 @@ export class ZephyrService {
       if (response.code === 200) {
         return {
           cards: response.rows.map((card: any) => ({
-            id: String(card.id), // Convert to string to avoid BigInt serialization issues
-            orderId: String(card.orderId || ''),
-            userId: String(card.userId || ''),
-            userName: String(card.userName || ''),
-            cardNo: String(card.cardNo),
-            currency: String(card.currency || 'USD'),
-            balance: Number(card.balance) || 0,
-            activateDate: String(card.activateDate || ''),
-            status: Number(card.status) || 0,
-            usedScenes: String(card.usedScenes || ''),
-            cardArea: String(card.cardArea || ''),
-            label: String(card.label || ''),
+            id: card.id, // Convert to string to avoid BigInt serialization issues
+            orderId: card.orderId,
+            userId: card.userId,
+            userName: card.userName,
+            cardNo: card.cardNo,
+            currency: card.currency,
+            balance: card.balance,
+            activateDate: card.activateDate,
+            status: card.status,
+            usedScenes: card.usedScenes,
+            cardArea: card.cardArea,
+            label: card.label,
           })),
-          total: Number(response.total) || 0,
+          total: response.total,
         };
       } else {
         this.logger.debug(
