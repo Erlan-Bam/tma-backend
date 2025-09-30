@@ -59,7 +59,35 @@ export class ZephyrService {
         };
       } else {
         this.logger.debug(
-          `Getting child account resulted in operation not successful, response: ${JSON.stringify(response)}`,
+          `Getting child account resulted in operation not successful, response: ${response}`,
+        );
+        throw new Error('Operation not successful');
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when getting child account' + error);
+      throw error;
+    }
+  }
+
+  async getAccountBalance(childUserId: string) {
+    try {
+      const response = await this.sendRequest({
+        method: 'GET',
+        endpoint: `/open-api/user/child`,
+        childUserId: childUserId,
+      });
+
+      const data = response.rows;
+      console.log(response);
+
+      if (response.code === 200) {
+        const user = data.find((u: any) => u.userId === childUserId);
+        return {
+          balance: user.balance,
+        };
+      } else {
+        this.logger.debug(
+          `Getting child account resulted in operation not successful, response: ${response}`,
         );
         throw new Error('Operation not successful');
       }

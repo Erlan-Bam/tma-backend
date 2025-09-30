@@ -22,6 +22,11 @@ export class AccountController {
     return await this.accountService.getAccountById(userId);
   }
 
+  @Get('balance')
+  async getAccountBalance(@User('id') userId: string) {
+    return await this.accountService.getAccountBalance(userId);
+  }
+
   @Get('topup/applications')
   async getTopupApplications(
     @User('id') userId: string,

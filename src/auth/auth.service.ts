@@ -43,17 +43,7 @@ export class AuthService {
   }
 
   async tmaAuth(data: TmaAuthDto) {
-    console.log('🚀 TMA Auth request received');
-    console.log('📤 InitData length:', data.initData.length);
-    console.log(
-      '📤 InitData preview:',
-      data.initData.substring(0, 100) + '...',
-    );
-    console.log('🔑 BOT_TOKEN available:', !!this.BOT_TOKEN);
-
     const parsedData = this.validateInitData(data.initData, this.BOT_TOKEN);
-
-    console.log('📋 Parsed data result:', parsedData ? 'SUCCESS' : 'FAILED');
 
     if (!parsedData) {
       console.log('❌ Validation failed - Invalid Telegram data');
@@ -122,9 +112,6 @@ export class AuthService {
     botToken: string,
   ): ParsedInitData | null {
     try {
-      console.log('🔍 Starting validation...');
-      console.log('📄 InitData length:', initData.length);
-
       const urlParams = new URLSearchParams(initData);
       const data: any = {};
 
@@ -141,11 +128,6 @@ export class AuthService {
           data[key] = value;
         }
       }
-
-      console.log('📋 Parsed keys:', Object.keys(data));
-      console.log('🔑 Hash from data:', data.hash);
-      console.log('📅 Auth date:', new Date(data.auth_date * 1000));
-
       const hash = data.hash;
       delete data.hash;
 
@@ -157,8 +139,6 @@ export class AuthService {
         )
         .join('\n');
 
-      console.log('📝 Data check string:', dataCheckString);
-
       const secretKey = crypto
         .createHmac('sha256', 'WebAppData')
         .update(botToken)
@@ -168,10 +148,6 @@ export class AuthService {
         .createHmac('sha256', secretKey)
         .update(dataCheckString)
         .digest('hex');
-
-      console.log('🔒 Expected hash:', hash);
-      console.log('🔒 Calculated hash:', calculatedHash);
-      console.log('✅ Hash match:', calculatedHash === hash);
 
       if (calculatedHash !== hash) {
         console.log('❌ Hash mismatch - ПРОПУСКАЕМ ДЛЯ ТЕСТИРОВАНИЯ');

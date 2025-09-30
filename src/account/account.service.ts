@@ -45,8 +45,25 @@ export class AccountService {
         throw new HttpException('Account not found', 404);
       }
 
-      this.logger.debug('Account: ' + JSON.stringify(account));
       return await this.zephyr.getChildAccount(account.childUserId);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error('Error when getting account by telegram id: ' + error);
+      throw new HttpException('Something went wrong', 500);
+    }
+  }
+
+  async getAccountBalance(id: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: id },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      return await this.zephyr.getAccountBalance(account.childUserId);
     } catch (error) {
       if (error instanceof HttpException) throw error;
       this.logger.error('Error when getting account by telegram id: ' + error);
@@ -64,7 +81,6 @@ export class AccountService {
         throw new HttpException('Account not found', 404);
       }
 
-      this.logger.debug('Account: ' + JSON.stringify(account));
       return await this.zephyr.getTopupTransactions(account.childUserId);
     } catch (error) {
       if (error instanceof HttpException) throw error;
@@ -85,7 +101,6 @@ export class AccountService {
         throw new HttpException('Account not found', 404);
       }
 
-      this.logger.debug('Account: ' + JSON.stringify(account));
       return await this.zephyr.getTopupApplications(account.childUserId, data);
     } catch (error) {
       if (error instanceof HttpException) throw error;
