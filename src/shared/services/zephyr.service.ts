@@ -694,7 +694,7 @@ export class ZephyrService {
       if (response.code === 200) {
         return {
           cards: response.rows.map((card: any) => ({
-            id: card.id, // Convert to string to avoid BigInt serialization issues
+            id: card.id,
             orderId: card.orderId,
             userId: card.userId,
             userName: card.userName,
