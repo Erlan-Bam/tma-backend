@@ -267,7 +267,7 @@ export class TransactionQueue {
                 removeOnComplete: 100,
                 removeOnFail: 50,
                 delay: 1000,
-                // jobId: `tx-${tx.tronId}`,
+                jobId: `tx-${tx.tronId}`,
               },
             );
           }
