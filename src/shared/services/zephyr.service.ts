@@ -68,22 +68,17 @@ export class ZephyrService {
       throw error;
     }
   }
-  //NEEDS FIX
   async getAccountBalance(childUserId: string) {
     try {
       const response = await this.sendRequest({
         method: 'GET',
-        endpoint: `/open-api/user/child`,
+        endpoint: `/open-api/child/wallet/balance`,
         childUserId: childUserId,
       });
 
-      const data = response.rows;
-      console.log(response);
-
       if (response.code === 200) {
-        const user = data.find((u: any) => u.userId === childUserId);
         return {
-          balance: user.balance,
+          balance: response.data.balance,
         };
       } else {
         this.logger.debug(
