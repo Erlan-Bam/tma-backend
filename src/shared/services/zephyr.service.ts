@@ -506,8 +506,8 @@ export class ZephyrService {
         endpoint: '/open-api/wallet/child/topup/application/audit',
         body: {
           id: applicationId,
-          status: 2,
-          remark: 'Expired',
+          status: 1,
+          remark: 'Approved',
         },
       });
 
