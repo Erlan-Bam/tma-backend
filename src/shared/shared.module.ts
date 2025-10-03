@@ -12,7 +12,7 @@ import { TronService } from './services/tron.service';
   imports: [JwtModule.register({})],
   providers: [
     PrismaService,
-    // BotService,
+    BotService,
     ZephyrService,
     TronService,
     CronService,
@@ -21,7 +21,7 @@ import { TronService } from './services/tron.service';
   ],
   exports: [
     PrismaService,
-    // BotService,
+    BotService,
     ZephyrService,
     TronService,
     CronService,
