@@ -33,16 +33,20 @@ export class TransactionTronService {
 
   async getWalletUSDTTransactions(address: string) {
     try {
+      const now = Math.floor(Date.now() / 1000);
       const response = await this.tron.get('/api/token_trc20/transfers', {
         params: {
           start: 0,
           limit: 50,
           relatedAddress: address,
           contract_address: this.USDT_CONTRACT_ADDRESS,
-          start_timestamp: Date.now() - 10 * 60 * 1000,
-          end_timestamp: Date.now(),
+          start_timestamp: now - 10 * 60,
+          end_timestamp: now,
         },
       });
+      this.logger.debug(
+        `Tron transactions response: ${JSON.stringify(response.data)}`,
+      );
 
       const transfers: TokenTransfer[] = response.data.token_transfers;
 
