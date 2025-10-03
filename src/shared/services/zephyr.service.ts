@@ -362,17 +362,6 @@ export class ZephyrService {
 
   async createCard(childUserId: string, body: CreateCardDto) {
     try {
-      this.logger.debug(
-        JSON.stringify({
-          childUserId: childUserId,
-          method: 'POST',
-          endpoint: '/open-api/child/card/order/application',
-          body: {
-            ...body,
-            topupAmount: 0,
-          },
-        }),
-      );
       const response = await this.sendRequest({
         childUserId: childUserId,
         method: 'POST',
@@ -420,6 +409,8 @@ export class ZephyrService {
         endpoint: `/open-api/child/card/info/${cardId}`,
       });
 
+      console.log(response);
+
       if (response.code === 200) {
         const data = response.data;
         return {
@@ -433,6 +424,7 @@ export class ZephyrService {
           minTopupAmount: data.minTopupAmount,
           maxTopupAmount: data.maxTopupAmount,
           usedScenes: data.usedScenes,
+          organize: data.organize,
         };
       } else {
         return {
@@ -547,7 +539,8 @@ export class ZephyrService {
             activateDate: card.activateDate,
             minTopupAmount: card.minTopupAmount,
             maxTopupAmount: card.maxTopupAmount,
-            usedScenes: card.usedScenes || '',
+            usedScenes: card.usedScenes,
+            organize: card.organize,
           })),
           total: response.total,
         };
