@@ -173,4 +173,24 @@ export class AdminService {
       throw new HttpException('Something Went Wrong', 500);
     }
   }
+
+  async getTronBalance(id: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: id },
+        select: { address: true, privateKey: true },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+      const address = account.address as TronAddress;
+
+      return await this.tron.getTronBalance(address.base58, account.privateKey);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error('Error when getting account by telegram id: ' + error);
+      throw new HttpException('Something went wrong', 500);
+    }
+  }
 }

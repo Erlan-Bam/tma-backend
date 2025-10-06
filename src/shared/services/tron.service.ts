@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
-import { TokenTransfer, TronAccount } from '../../transaction/types/tron.types';
+import { TronAccount } from '../../transaction/types/tron.types';
 import { TronWeb } from 'tronweb';
 
 @Injectable()
@@ -115,6 +115,25 @@ export class TronService {
     } catch (error) {
       this.logger.error('Error transferring USDT:', error);
       throw new Error(`Failed to transfer USDT: ${error.message}`);
+    }
+  }
+
+  async getTronBalance(address: string, privateKey: string) {
+    try {
+      this.tronweb.setPrivateKey(privateKey);
+
+      const contract = await this.tronweb
+        .contract()
+        .at(this.USDT_CONTRACT_ADDRESS);
+      const balance = await contract.balanceOf(address).call();
+
+      return {
+        success: true,
+        balance: balance / 1000000,
+      };
+    } catch (error) {
+      this.logger.error('Error getting USDT balance:', error);
+      throw new HttpException('Failed to get USDT balance', 500);
     }
   }
 }

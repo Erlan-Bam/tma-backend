@@ -10,6 +10,7 @@ import { AdminService } from './admin.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from 'src/shared/guards/admin.guard';
+import { User } from 'src/shared/decorator/user.decorator';
 
 @Controller('admin')
 @ApiBearerAuth('JWT')
@@ -50,5 +51,10 @@ export class AdminController {
   @Post('transfer/:userId')
   async transferUSDT(@Param('userId', ParseUUIDPipe) userId: string) {
     return await this.adminService.transferUSDT(userId);
+  }
+
+  @Get('balance/tron')
+  async getTronBalance(@User('id') userId: string) {
+    return await this.adminService.getTronBalance(userId);
   }
 }
