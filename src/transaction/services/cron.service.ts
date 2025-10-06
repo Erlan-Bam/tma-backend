@@ -15,7 +15,7 @@ export class TransactionCronService {
     @InjectQueue('transaction-queue') private queue: Queue,
   ) {}
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async handleWalletMonitoring() {
     try {
       const wallets = await this.prisma.account.count();
@@ -25,7 +25,7 @@ export class TransactionCronService {
       const totalBatches = Math.ceil(wallets / this.BATCH_SIZE);
 
       for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-        const delay = (batchIndex % this.CONCURRENT_BATCHES) * 12000;
+        const delay = (batchIndex % this.CONCURRENT_BATCHES) * 1500;
 
         await this.queue.add(
           'monitor-wallet-batch',
@@ -36,11 +36,13 @@ export class TransactionCronService {
           },
           {
             delay,
-            attempts: 3,
+            attempts: 2,
             backoff: {
               type: 'exponential',
-              delay: 5000,
+              delay: 3000,
             },
+            removeOnComplete: true,
+            removeOnFail: 100,
           },
         );
       }
@@ -50,6 +52,27 @@ export class TransactionCronService {
       );
     } catch (error) {
       this.logger.error('Error scheduling wallet monitoring:', error);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async monitorQueueHealth() {
+    try {
+      const waiting = await this.queue.getWaiting();
+      const active = await this.queue.getActive();
+      const failed = await this.queue.getFailed();
+
+      this.logger.log(
+        `📊 Queue Status - Waiting: ${waiting.length}, Active: ${active.length}, Failed: ${failed.length}`,
+      );
+
+      if (failed.length > 100) {
+        this.logger.warn(
+          `⚠️ High failure rate detected: ${failed.length} failed jobs`,
+        );
+      }
+    } catch (error) {
+      this.logger.error('Error monitoring queue health:', error);
     }
   }
 }
