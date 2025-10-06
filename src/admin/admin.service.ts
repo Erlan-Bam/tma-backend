@@ -193,4 +193,27 @@ export class AdminService {
       throw new HttpException('Something went wrong', 500);
     }
   }
+
+  async getZephyrBalance(userId: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: userId },
+        select: { childUserId: true },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      return await this.zephyr.getAccountBalance(account.childUserId);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        `Error when getting Zephyr balance for userId=${userId}, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
 }
