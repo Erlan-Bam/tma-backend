@@ -11,6 +11,7 @@ import { ZephyrService } from 'src/shared/services/zephyr.service';
 @Processor('transaction-queue')
 export class TransactionQueue {
   private isWaiting = false;
+  private readonly FIXED_FEE = 1;
   private readonly logger = new Logger(TransactionQueue.name);
 
   constructor(
@@ -251,11 +252,18 @@ export class TransactionQueue {
               `💰 New transaction found: ${tx.tronId} - ${tx.amount} USDT for account ${account.id}`,
             );
 
+            if (tx.amount <= this.FIXED_FEE) {
+              this.logger.warn(
+                `Transaction is less than or equal to fixed fee (${this.FIXED_FEE} USDT), skipping: ${tx.tronId} - ${tx.amount} USDT for account ${account.id}`,
+              );
+              continue;
+            }
+
             await this.queue.add(
               'successful-transaction',
               {
                 account: account,
-                amount: tx.amount,
+                amount: tx.amount - this.FIXED_FEE,
                 tronId: tx.tronId,
               },
               {
