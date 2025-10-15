@@ -190,6 +190,100 @@ Your funds and data are protected by bank-level encryption and security measures
     }
   }
 
+  async sendMessage(
+    chatId: number | string,
+    message: string,
+    options?: {
+      parse_mode?: 'Markdown' | 'HTML';
+      disable_web_page_preview?: boolean;
+    },
+  ) {
+    try {
+      await this.bot.api.sendMessage(chatId, message, options);
+      this.logger.log(`Message sent to user ${chatId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send message to user ${chatId}`,
+        error as Error,
+      );
+      throw error;
+    }
+  }
+
+  async sendSuccessfulTransactionMessage(
+    telegramId: bigint | string,
+    amount: number,
+    tronId: string,
+  ) {
+    try {
+      const successMessage = `
+🎉 *Payment Successful!*
+
+Your payment has been processed successfully.
+
+💰 *Amount:* ${amount.toFixed(2)} USDT
+📝 *Transaction ID:* \`${tronId}\`
+✅ *Status:* Completed
+
+Your wallet has been topped up! 🚀
+
+Thank you for using Arctic Pay! 💎
+      `.trim();
+
+      await this.bot.api.sendMessage(telegramId.toString(), successMessage, {
+        parse_mode: 'Markdown',
+      });
+
+      this.logger.log(
+        `📨 Success message sent to user ${telegramId} for transaction ${tronId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send successful transaction message to user ${telegramId} for transaction ${tronId}`,
+        error as Error,
+      );
+      throw error;
+    }
+  }
+
+  async sendUnsuccessfulTransactionMessage(
+    telegramId: bigint | string,
+    amount: number,
+    tronId: string,
+    errorReason?: string,
+  ) {
+    try {
+      const failureMessage = `
+⚠️ *Payment Processing Failed*
+
+We encountered an issue processing your payment.
+
+💰 *Amount:* ${amount.toFixed(2)} USDT
+📝 *Transaction ID:* \`${tronId}\`
+❌ *Status:* Failed
+
+${errorReason ? `*Reason:* ${errorReason}\n` : ''}
+Please contact our support team if you need assistance.
+
+💬 Support: @arctic_pay_support
+      `.trim();
+
+      await this.bot.api.sendMessage(telegramId.toString(), failureMessage, {
+        parse_mode: 'Markdown',
+      });
+
+      this.logger.log(
+        `📨 Failure message sent to user ${telegramId} for transaction ${tronId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send unsuccessful transaction message to user ${telegramId} for transaction ${tronId}`,
+        error as Error,
+      );
+      throw error;
+    }
+  }
+
   async onModuleDestroy() {
     this.bot.stop();
     this.logger.log('Telegram bot stopped');

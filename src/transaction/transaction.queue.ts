@@ -13,6 +13,7 @@ import {
 } from '@prisma/client';
 import { TronAddress } from './types/tron.types';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
+import { BotService } from 'src/shared/services/bot.service';
 
 @Processor('transaction-queue')
 export class TransactionQueue {
@@ -24,6 +25,7 @@ export class TransactionQueue {
     private prisma: PrismaService,
     private tron: TransactionTronService,
     private zephyr: ZephyrService,
+    private bot: BotService,
     @InjectQueue('transaction-queue') private queue: Queue,
   ) {
     this.loadCardFee();
@@ -83,6 +85,7 @@ export class TransactionQueue {
       const accounts = await this.prisma.account.findMany({
         select: {
           id: true,
+          telegramId: true,
           address: true,
           childUserId: true,
           referredBy: true,
@@ -219,12 +222,39 @@ export class TransactionQueue {
         );
       }
 
+      try {
+        await this.bot.sendSuccessfulTransactionMessage(
+          account.telegramId,
+          amount,
+          tronId,
+        );
+      } catch (error) {
+        this.logger.error(
+          `❌ Error sending message to user ${account.telegramId} for transaction ${tronId}`,
+          error?.message || error,
+        );
+      }
+
       return result;
     } catch (error) {
       this.logger.error(
         `❌ Error processing successful transaction for account ${accountId}:`,
         error?.message || error,
       );
+
+      try {
+        await this.bot.sendUnsuccessfulTransactionMessage(
+          account.telegramId,
+          amount,
+          tronId,
+          'Transaction processing failed',
+        );
+      } catch (notificationError) {
+        this.logger.error(
+          `❌ Error sending failure notification to user ${account.telegramId} for transaction ${tronId}`,
+          notificationError?.message || notificationError,
+        );
+      }
 
       throw error;
     }
