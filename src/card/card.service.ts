@@ -126,6 +126,8 @@ export class CardService {
         );
       }
 
+      createCardDto.topupAmount -= 1;
+
       const response = await this.zephyr.createCard(
         account.childUserId,
         createCardDto,

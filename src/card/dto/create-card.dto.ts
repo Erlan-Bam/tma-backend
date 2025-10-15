@@ -23,13 +23,13 @@ export class CreateCardDto {
 
   @Type(() => Number)
   @ApiProperty({
-    description: 'The initial top-up amount for the card (minimum is 20)',
+    description: 'The initial top-up amount for the card (minimum is 22)',
     example: 50,
     required: true,
-    minimum: 20,
+    minimum: 22,
   })
   @IsNotEmpty()
   @IsInt()
-  @Min(20)
+  @Min(22)
   topupAmount: number;
 }
