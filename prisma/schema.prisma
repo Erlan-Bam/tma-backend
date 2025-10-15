@@ -22,6 +22,14 @@ enum TransactionStatus {
   SUCCESS
   FAILED
 }
+enum CommissionType {
+  FIXED
+  PERCENTAGE
+}
+enum CommissionName {
+  CARD_FEE
+  TRANSACTION_FEE
+}
 
 model Account {
   id                 String   @id @default(uuid())
@@ -53,4 +61,13 @@ model Transaction {
   updatedAt      DateTime @updatedAt
 
   account        Account  @relation(fields: [accountId], references: [id])
+}
+
+model Commission {
+  id             String   @id @default(uuid())
+  name           CommissionName @unique
+  rate           Float
+  type           CommissionType
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
