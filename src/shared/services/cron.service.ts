@@ -36,9 +36,9 @@ export class CronService {
   }
 
   @Cron(CronExpression.EVERY_HOUR)
-  async handleCommisionUpdate() {
+  async handleCommissionUpdate() {
     try {
-      await this.transactionQueue.loadCardFee();
+      await this.transactionQueue.loadTransactionFee();
       this.logger.log('Commission rate cache refreshed successfully');
     } catch (error) {
       this.logger.error('Error in handleCommisionUpdate: ' + error);

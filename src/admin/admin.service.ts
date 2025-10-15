@@ -2,7 +2,10 @@ import { HttpException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { TronService } from 'src/shared/services/tron.service';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
+import { TransactionQueue } from 'src/transaction/transaction.queue';
 import { TronAddress } from 'src/transaction/types/tron.types';
+import { UpdateCommissionDto } from './dto/update-commision.dto';
+import { CommissionName } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -11,6 +14,7 @@ export class AdminService {
     private zephyr: ZephyrService,
     private prisma: PrismaService,
     private tron: TronService,
+    private transactionQueue: TransactionQueue,
   ) {}
 
   async getAllCards() {
@@ -213,6 +217,67 @@ export class AdminService {
       this.logger.error(
         `Error when getting Zephyr balance for userId=${userId}, error: ${error}`,
       );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async updateCardFee(data: UpdateCommissionDto) {
+    try {
+      const commission = await this.prisma.commission.upsert({
+        where: { name: CommissionName.CARD_FEE },
+        update: {
+          type: data.type,
+          rate: data.rate,
+        },
+        create: {
+          name: CommissionName.CARD_FEE,
+          type: data.type,
+          rate: data.rate,
+        },
+      });
+
+      //FIX
+      // try {
+      //   await this.transactionQueue.loadCardFee();
+      // } catch (error) {
+      //   this.logger.error(
+      //     `Failed to reload card fee in transaction queue in admin service: ${error}`,
+      //   );
+      // }
+
+      return { commission };
+    } catch (error) {
+      this.logger.error(`Error when updating card fee, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async updateTransactionFee(data: UpdateCommissionDto) {
+    try {
+      const commission = await this.prisma.commission.upsert({
+        where: { name: CommissionName.TRANSACTION_FEE },
+        update: {
+          type: data.type,
+          rate: data.rate,
+        },
+        create: {
+          name: CommissionName.TRANSACTION_FEE,
+          type: data.type,
+          rate: data.rate,
+        },
+      });
+
+      try {
+        await this.transactionQueue.loadTransactionFee();
+      } catch (error) {
+        this.logger.error(
+          `Failed to reload transaction fee in transaction queue in admin service: ${error}`,
+        );
+      }
+
+      return { commission };
+    } catch (error) {
+      this.logger.error(`Error when updating card fee, error: ${error}`);
       throw new HttpException('Something Went Wrong', 500);
     }
   }

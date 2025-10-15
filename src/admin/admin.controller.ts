@@ -1,8 +1,10 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -10,6 +12,7 @@ import { AdminService } from './admin.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from 'src/shared/guards/admin.guard';
+import { UpdateCommissionDto } from './dto/update-commision.dto';
 
 @Controller('admin')
 @ApiBearerAuth('JWT')
@@ -60,5 +63,15 @@ export class AdminController {
   @Get('balance/tron/:userId')
   async getTronBalance(@Param('userId', ParseUUIDPipe) userId: string) {
     return await this.adminService.getTronBalance(userId);
+  }
+
+  @Patch('card-fee')
+  async updateCardFee(@Body() data: UpdateCommissionDto) {
+    return await this.adminService.updateCardFee(data);
+  }
+
+  @Patch('transaction-fee')
+  async updateTransactionFee(@Body() data: UpdateCommissionDto) {
+    return await this.adminService.updateTransactionFee(data);
   }
 }

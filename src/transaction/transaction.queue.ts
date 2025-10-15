@@ -28,25 +28,27 @@ export class TransactionQueue {
     private bot: BotService,
     @InjectQueue('transaction-queue') private queue: Queue,
   ) {
-    this.loadCardFee();
+    this.loadTransactionFee();
   }
 
-  async loadCardFee() {
+  async loadTransactionFee() {
     try {
       const commission = await this.prisma.commission.findUnique({
-        where: { name: CommissionName.CARD_FEE },
+        where: { name: CommissionName.TRANSACTION_FEE },
       });
 
       if (commission) {
         this.commission = commission;
-        this.logger.log(`✅ Card fee loaded: ${this.commission.rate} USDT`);
+        this.logger.log(
+          `✅ Transaction fee loaded: ${this.commission.rate} USDT`,
+        );
       } else {
         this.logger.warn(
-          '⚠️ Card fee not found in database, using default value of 1',
+          '⚠️ Transaction fee not found in database, using default value of 1',
         );
         this.commission = await this.prisma.commission.create({
           data: {
-            name: CommissionName.CARD_FEE,
+            name: CommissionName.TRANSACTION_FEE,
             type: CommissionType.FIXED,
             rate: 1.2,
           },
@@ -58,9 +60,9 @@ export class TransactionQueue {
     }
   }
 
-  private async getCardFee(): Promise<Commission | null> {
+  private async getTransactionFee(): Promise<Commission | null> {
     if (this.commission === null) {
-      await this.loadCardFee();
+      await this.loadTransactionFee();
     }
     return this.commission;
   }
@@ -347,7 +349,7 @@ export class TransactionQueue {
               `💰 New transaction found: ${tx.tronId} - ${tx.amount} USDT for account ${account.id}`,
             );
 
-            const commission = await this.getCardFee();
+            const commission = await this.getTransactionFee();
             if (commission.type === 'FIXED' && tx.amount <= commission.rate) {
               this.logger.warn(
                 `Transaction is less than or equal to card fee (${commission.rate} USDT), skipping: ${tx.tronId} - ${tx.amount} USDT for account ${account.id}`,
