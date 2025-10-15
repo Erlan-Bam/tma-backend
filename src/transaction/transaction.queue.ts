@@ -40,7 +40,7 @@ export class TransactionQueue {
       if (commission) {
         this.commission = commission;
         this.logger.log(
-          `✅ Transaction fee loaded: ${this.commission.rate} USDT`,
+          `✅ Transaction fee loaded: ${this.commission.rate} ${commission.type === 'FIXED' ? 'USDT' : '%'}`,
         );
       } else {
         this.logger.warn(
@@ -216,6 +216,7 @@ export class TransactionQueue {
           this.logger.log(
             `User has referrer ${account.referredBy}, processing referral bonus.`,
           );
+          // this.zephyr.addBonusToReferrer();
         }
       } catch (error) {
         this.logger.error(

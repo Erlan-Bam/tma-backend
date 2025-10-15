@@ -3,14 +3,63 @@ import { PrismaService } from 'src/shared/services/prisma.service';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { TopupCardDto } from './dto/topup-card.dto';
+import { CommissionName, Commission, CommissionType } from '@prisma/client';
 
 @Injectable()
 export class CardService {
   private readonly logger = new Logger(CardService.name);
+  private commission: Commission | null = null;
+
   constructor(
     private prisma: PrismaService,
     private zephyr: ZephyrService,
-  ) {}
+  ) {
+    this.loadCardFee();
+  }
+
+  async loadCardFee() {
+    try {
+      const commission = await this.prisma.commission.findUnique({
+        where: { name: CommissionName.CARD_FEE },
+      });
+
+      if (commission) {
+        this.commission = commission;
+        this.logger.log(
+          `✅ Card fee loaded: ${this.commission.rate} ${commission.type === 'FIXED' ? 'USDT' : '%'}`,
+        );
+      } else {
+        this.logger.warn(
+          '⚠️ Card fee not found in database, using default value of 1',
+        );
+        this.commission = await this.prisma.commission.create({
+          data: {
+            name: CommissionName.CARD_FEE,
+            type: CommissionType.FIXED,
+            rate: 1,
+          },
+        });
+      }
+    } catch (error) {
+      this.logger.error('❌ Error loading card fee:', error);
+      this.commission = null;
+    }
+  }
+
+  private async getCardFee(): Promise<Commission | null> {
+    if (this.commission === null) {
+      await this.loadCardFee();
+    }
+    return this.commission;
+  }
+
+  private processFee(amount: number, commission: Commission): number {
+    if (commission.type === 'FIXED') {
+      return amount - commission.rate;
+    } else {
+      return amount * (1 - commission.rate / 100);
+    }
+  }
 
   async getProductList(id: string) {
     try {
@@ -130,7 +179,24 @@ export class CardService {
         );
       }
 
-      createCardDto.topupAmount -= 1;
+      const cardFee = await this.getCardFee();
+      if (!cardFee) {
+        throw new HttpException('Card fee not configured', 500);
+      }
+
+      const processedAmount = this.processFee(
+        createCardDto.topupAmount,
+        cardFee,
+      );
+
+      if (processedAmount <= 0) {
+        throw new HttpException(
+          `Amount must be greater than card fee (${cardFee.rate} USDT)`,
+          400,
+        );
+      }
+
+      createCardDto.topupAmount = processedAmount;
 
       const response = await this.zephyr.createCard(
         account.childUserId,
@@ -145,12 +211,6 @@ export class CardService {
         );
       }
 
-      //REFERRAL LOGIC HERE
-      if (account.referrer) {
-        this.logger.log(
-          `User has referrer ${account.referrer}, processing referral bonus.`,
-        );
-      }
       return response;
     } catch (error) {
       if (error instanceof HttpException) {
