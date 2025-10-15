@@ -47,6 +47,7 @@ export class CardService {
     try {
       const account = await this.prisma.account.findUnique({
         where: { id: id },
+        select: { childUserId: true },
       });
 
       if (!account) {
@@ -69,6 +70,7 @@ export class CardService {
     try {
       const account = await this.prisma.account.findUnique({
         where: { id: id },
+        select: { childUserId: true },
       });
 
       if (!account) {
@@ -91,6 +93,7 @@ export class CardService {
     try {
       const account = await this.prisma.account.findUnique({
         where: { id: id },
+        select: { childUserId: true },
       });
 
       if (!account) {
@@ -113,6 +116,7 @@ export class CardService {
     try {
       const account = await this.prisma.account.findUnique({
         where: { id: id },
+        select: { childUserId: true, referrer: true },
       });
 
       if (!account) {
@@ -141,6 +145,12 @@ export class CardService {
         );
       }
 
+      //REFERRAL LOGIC HERE
+      if (account.referrer) {
+        this.logger.log(
+          `User has referrer ${account.referrer}, processing referral bonus.`,
+        );
+      }
       return response;
     } catch (error) {
       if (error instanceof HttpException) {
@@ -157,6 +167,7 @@ export class CardService {
     try {
       const account = await this.prisma.account.findUnique({
         where: { id: id },
+        select: { childUserId: true },
       });
 
       if (!account) {
@@ -200,16 +211,13 @@ export class CardService {
 
       const account = await this.prisma.account.findUnique({
         where: { id: id },
+        select: { childUserId: true },
       });
 
       if (!account) {
         this.logger.warn(`❌ Account not found for userId: ${id}`);
         throw new HttpException('Account not found', 404);
       }
-
-      this.logger.log(
-        `✅ Account found: ${account.email || 'no email'}, childUserId: ${account.childUserId || 'null'}`,
-      );
 
       if (!account.childUserId) {
         this.logger.warn(
@@ -221,24 +229,15 @@ export class CardService {
         );
       }
 
-      this.logger.debug(
-        `📋 Account details: ${JSON.stringify({
-          id: account.id,
-          email: account.email,
-          childUserId: account.childUserId,
-          createdAt: account.createdAt,
-        })}`,
-      );
-
       this.logger.log(
         `🚀 Calling Zephyr getActiveCards with childUserId: ${account.childUserId}`,
       );
 
-      const activeCards = await this.zephyr.getActiveCards(account.childUserId);
+      const cards = await this.zephyr.getActiveCards(account.childUserId);
 
-      this.logger.debug(`📋 Active cards data: ${JSON.stringify(activeCards)}`);
+      this.logger.debug(`📋 Active cards data: ${JSON.stringify(cards)}`);
 
-      return activeCards;
+      return cards;
     } catch (error) {
       if (error instanceof HttpException) {
         this.logger.error(

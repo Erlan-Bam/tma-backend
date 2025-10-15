@@ -43,6 +43,7 @@ export class TransactionQueue {
           id: true,
           address: true,
           childUserId: true,
+          referredBy: true,
         },
         skip: offset,
         take: batchSize,
@@ -161,6 +162,20 @@ export class TransactionQueue {
       this.logger.log(
         `✅ Successfully processed transaction for account ${accountId} - Created: ${JSON.stringify(result.transation)}, Applications: ${JSON.stringify(result.applications)}`,
       );
+
+      //REFERRAL LOGIC HERE
+      try {
+        if (account.referredBy) {
+          this.logger.log(
+            `User has referrer ${account.referredBy}, processing referral bonus.`,
+          );
+        }
+      } catch (error) {
+        this.logger.error(
+          `❌ Error processing referral in successful transaction for accountId: ${accountId} and referrerId: ${account.referredBy}`,
+          error?.message || error,
+        );
+      }
 
       return result;
     } catch (error) {
