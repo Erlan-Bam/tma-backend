@@ -14,6 +14,7 @@ import {
 import { TronAddress } from './types/tron.types';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
 import { BotService } from 'src/shared/services/bot.service';
+import { AccountService } from 'src/account/account.service';
 
 @Processor('transaction-queue')
 export class TransactionQueue {
@@ -26,6 +27,7 @@ export class TransactionQueue {
     private tron: TransactionTronService,
     private zephyr: ZephyrService,
     private bot: BotService,
+    private account: AccountService,
     @InjectQueue('transaction-queue') private queue: Queue,
   ) {
     this.loadTransactionFee();
@@ -216,7 +218,10 @@ export class TransactionQueue {
           this.logger.log(
             `User has referrer ${account.referredBy}, processing referral bonus.`,
           );
-          // this.zephyr.addBonusToReferrer();
+          await this.account.addReferralBonus({
+            accountId: account.referredBy,
+            amount: amount,
+          });
         }
       } catch (error) {
         this.logger.error(

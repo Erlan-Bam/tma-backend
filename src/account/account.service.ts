@@ -3,13 +3,13 @@ import { PrismaService } from 'src/shared/services/prisma.service';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
 import { GetTopupApplications } from './dto/get-topup-applications.dto';
 import { TronAddress } from 'src/transaction/types/tron.types';
-import { ConfigService } from '@nestjs/config';
 import { BotService } from 'src/shared/services/bot.service';
-import { ReferralLevel } from './types/referral-levels.type';
+import { ReferralBonus } from './types/add-referral-bonus.type';
 
 @Injectable()
 export class AccountService {
   private readonly logger = new Logger(AccountService.name);
+  private readonly REFERRAL_RATE = 0.2;
   constructor(
     private zephyr: ZephyrService,
     private prisma: PrismaService,
@@ -37,6 +37,65 @@ export class AccountService {
       throw new HttpException('Something went wrong', 500);
     }
   }
+
+  async addReferralBonus(referralBonus: ReferralBonus) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: referralBonus.accountId },
+        select: { childUserId: true },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      const amount = this.processFee(referralBonus.amount);
+
+      await this.zephyr.topupWallet(account.childUserId, amount);
+      const { applications } = await this.zephyr.getTopupApplications(
+        account.childUserId,
+        {
+          page: 1,
+          limit: 5,
+          status: 0,
+        },
+      );
+
+      if (!applications || applications.length === 0) {
+        throw new Error('No topup applications found after wallet topup');
+      }
+
+      this.logger.debug(
+        `Found ${applications.length} topup applications for account ${referralBonus.accountId}`,
+      );
+
+      for (const app of applications) {
+        if (app.amount === amount) {
+          this.logger.debug(
+            `Matched application ${app.id} with amount ${app.amount}`,
+          );
+          try {
+            await this.zephyr.acceptTopupApplication(app.id);
+            return {
+              status: 'success',
+              message: `Topup application ${app.id} matched successfully`,
+              applications: applications,
+            };
+          } catch (error) {
+            this.logger.error(
+              `Error creating transaction or accepting application ${app.id}:`,
+              error?.message || error,
+            );
+            throw error;
+          }
+        }
+      }
+    } catch (error) {
+      this.logger.error('Error when adding referral bonus: ' + error);
+      throw new HttpException('Something went wrong', 500);
+    }
+  }
+
   async getAccountById(id: string) {
     try {
       const account = await this.prisma.account.findUnique({
@@ -149,12 +208,9 @@ export class AccountService {
         where: { referredBy: id },
       });
 
-      const { myLevel, levels } = await this.getMyLevel(count);
-
       return {
         count: count,
-        levels: levels,
-        myLevel: myLevel,
+        rate: 0.2,
       };
     } catch (error) {
       if (error instanceof HttpException) throw error;
@@ -163,45 +219,12 @@ export class AccountService {
     }
   }
 
-  async getMyLevel(
-    count: number,
-  ): Promise<{ myLevel: ReferralLevel; levels: ReferralLevel[] }> {
-    const levels = await this.getReferralLevels();
-    let myLevel = levels[0];
-    if (count >= 10) {
-      myLevel = levels[1];
+  private processFee(amount: number) {
+    try {
+      const value = amount * (1 - this.REFERRAL_RATE / 100);
+      return parseFloat(value.toFixed(2));
+    } catch (error) {
+      this.logger.error('Error when processing fee: ' + error);
     }
-    if (count >= 30) {
-      myLevel = levels[2];
-    }
-    if (count >= 50) {
-      myLevel = levels[3];
-    }
-    return { myLevel: myLevel, levels: levels };
-  }
-
-  async getReferralLevels(): Promise<ReferralLevel[]> {
-    return [
-      {
-        level: 1,
-        cardRate: 15,
-        transactionRate: 0.05,
-      },
-      {
-        level: 2,
-        cardRate: 20,
-        transactionRate: 0.1,
-      },
-      {
-        level: 3,
-        cardRate: 25,
-        transactionRate: 0.2,
-      },
-      {
-        level: 4,
-        cardRate: 30,
-        transactionRate: 0.3,
-      },
-    ];
   }
 }
