@@ -44,4 +44,9 @@ export class AccountController {
   async getReferralLink(@User('id') userId: string) {
     return await this.accountService.getReferralLink(userId);
   }
+
+  @Get('referral/stats')
+  async getReferralStats(@User('id') userId: string) {
+    return await this.accountService.getReferralStats(userId);
+  }
 }
