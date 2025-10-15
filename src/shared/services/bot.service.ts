@@ -37,6 +37,10 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       const firstName = user?.first_name || 'Friend';
       const username = user?.username ? `@${user.username}` : '';
 
+      const referralCode = ctx.match ? ctx.match.toString().trim() : null;
+
+      const appUrl = referralCode ? `${url}?ref=${referralCode}` : url;
+
       // Красивое приветственное сообщение
       const welcomeMessage = `
 🌟 Welcome to Arctic Pay! 🌟
@@ -59,7 +63,7 @@ Welcome to Arctic Pay, a new way to manage your finances! 💎
       `.trim();
 
       const keyboard = new InlineKeyboard()
-        .webApp('🏦 Open Arctic Pay Wallet', url)
+        .webApp('🏦 Open Arctic Pay Wallet', appUrl)
         .row()
         .url('📞 Support', 'https://t.me/arctic_pay_support')
         .url('📖 Help Center', 'https://arcticpay.io/help');
@@ -69,9 +73,8 @@ Welcome to Arctic Pay, a new way to manage your finances! 💎
         parse_mode: 'Markdown',
       });
 
-      // Логируем новых пользователей
       this.logger.log(
-        `New user started bot: ${firstName} (ID: ${user?.id})${username ? ` ${username}` : ''}`,
+        `New user started bot: ${firstName} (ID: ${user?.id})${username ? ` ${username}` : ''}${referralCode ? ` [Referred by: ${referralCode}]` : ''}`,
       );
     });
 
@@ -174,6 +177,15 @@ Your funds and data are protected by bank-level encryption and security measures
       });
     } catch (error) {
       this.logger.error('Failed to launch Telegram bot', error as Error);
+      throw error;
+    }
+  }
+
+  async getBotInfo() {
+    try {
+      return await this.bot.api.getMe();
+    } catch (error) {
+      this.logger.error('Failed to get bot info', error as Error);
       throw error;
     }
   }

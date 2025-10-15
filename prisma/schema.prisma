@@ -36,8 +36,11 @@ model Account {
   address            Json
   privateKey         String  @unique
   publicKey          String  @unique
+  referredBy         String?
 
   transactions       Transaction[]
+  referrer           Account?  @relation("Referrals", fields: [referredBy], references: [id])
+  referrals          Account[] @relation("Referrals")
 }
 
 model Transaction {

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class TmaAuthDto {
   @ApiProperty({
@@ -9,4 +9,13 @@ export class TmaAuthDto {
   })
   @IsString()
   initData!: string;
+
+  @ApiProperty({
+    description: 'Referral code from the user who referred this user',
+    example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  referralCode?: string;
 }

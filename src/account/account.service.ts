@@ -1,10 +1,10 @@
 import { HttpException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
-import { TopupWalletDto } from './dto/topup-wallet.dto';
 import { GetTopupApplications } from './dto/get-topup-applications.dto';
-import { TransactionStatus } from '@prisma/client';
 import { TronAddress } from 'src/transaction/types/tron.types';
+import { ConfigService } from '@nestjs/config';
+import { BotService } from 'src/shared/services/bot.service';
 
 @Injectable()
 export class AccountService {
@@ -12,6 +12,7 @@ export class AccountService {
   constructor(
     private zephyr: ZephyrService,
     private prisma: PrismaService,
+    private bot: BotService,
   ) {}
 
   async topupWallet(id: string) {
@@ -105,6 +106,29 @@ export class AccountService {
     } catch (error) {
       if (error instanceof HttpException) throw error;
       this.logger.error('Error when getting account by telegram id: ' + error);
+      throw new HttpException('Something went wrong', 500);
+    }
+  }
+
+  async getReferralLink(id: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: id },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      const bot = await this.bot.getBotInfo();
+      const referralLink = `https://t.me/${bot.username}?start=${account.id}`;
+
+      return {
+        referralLink: referralLink,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error('Error when getting referral link: ' + error);
       throw new HttpException('Something went wrong', 500);
     }
   }

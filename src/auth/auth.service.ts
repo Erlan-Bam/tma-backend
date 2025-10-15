@@ -74,6 +74,25 @@ export class AuthService {
 
         const wallet = await this.tronService.createAccount();
 
+        let referrerId: string | null = null;
+        if (data.referralCode) {
+          const referrer = await this.prisma.account.findUnique({
+            where: { id: data.referralCode },
+            select: { id: true, telegramId: true },
+          });
+
+          if (referrer) {
+            referrerId = referrer.id;
+            this.logger.log(
+              `New user ${telegramUser.id} referred by ${referrer.telegramId}`,
+            );
+          } else {
+            this.logger.warn(
+              `Invalid referral code provided: ${data.referralCode}`,
+            );
+          }
+        }
+
         account = await this.prisma.account.create({
           data: {
             telegramId: telegramUser.id,
@@ -83,6 +102,7 @@ export class AuthService {
             address: wallet.address,
             privateKey: wallet.privateKey,
             publicKey: wallet.publicKey,
+            referredBy: referrerId,
           },
         });
       } catch (error) {

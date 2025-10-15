@@ -39,4 +39,9 @@ export class AccountController {
   async getTopupTransactions(@User('id') userId: string) {
     return await this.accountService.getTopupTransactions(userId);
   }
+
+  @Get('referral/link')
+  async getReferralLink(@User('id') userId: string) {
+    return await this.accountService.getReferralLink(userId);
+  }
 }
