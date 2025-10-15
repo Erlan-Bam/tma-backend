@@ -4,14 +4,20 @@ import { Job, Queue } from 'bull';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { TransactionTronService } from './services/tron.service';
 import { MonitorBatchJob, SuccessfulTransactionJob } from './types/queue.types';
-import { Account, TransactionStatus } from '@prisma/client';
+import {
+  Account,
+  TransactionStatus,
+  CommissionName,
+  Commission,
+  CommissionType,
+} from '@prisma/client';
 import { TronAddress } from './types/tron.types';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
 
 @Processor('transaction-queue')
 export class TransactionQueue {
   private isWaiting = false;
-  private readonly FIXED_FEE = 1;
+  private commission: Commission | null = null;
   private readonly logger = new Logger(TransactionQueue.name);
 
   constructor(
@@ -19,7 +25,43 @@ export class TransactionQueue {
     private tron: TransactionTronService,
     private zephyr: ZephyrService,
     @InjectQueue('transaction-queue') private queue: Queue,
-  ) {}
+  ) {
+    this.loadCardFee();
+  }
+
+  async loadCardFee() {
+    try {
+      const commission = await this.prisma.commission.findUnique({
+        where: { name: CommissionName.CARD_FEE },
+      });
+
+      if (commission) {
+        this.commission = commission;
+        this.logger.log(`✅ Card fee loaded: ${this.commission.rate} USDT`);
+      } else {
+        this.logger.warn(
+          '⚠️ Card fee not found in database, using default value of 1',
+        );
+        this.commission = await this.prisma.commission.create({
+          data: {
+            name: CommissionName.CARD_FEE,
+            type: CommissionType.FIXED,
+            rate: 1.2,
+          },
+        });
+      }
+    } catch (error) {
+      this.logger.error('❌ Error loading card fee:', error);
+      this.commission = null;
+    }
+  }
+
+  private async getCardFee(): Promise<Commission | null> {
+    if (this.commission === null) {
+      await this.loadCardFee();
+    }
+    return this.commission;
+  }
 
   private isRateLimitError(error: any): boolean {
     return (
@@ -243,6 +285,14 @@ export class TransactionQueue {
     return { processed, errors };
   }
 
+  private processFee(amount: number, commission: Commission): number {
+    if (commission.type === 'FIXED') {
+      return amount - commission.rate;
+    } else {
+      return amount * (1 - commission.rate / 100);
+    }
+  }
+
   private async processAccountTransactions(account: Partial<Account>) {
     if (!account.address) {
       this.logger.warn(`Account ${account.id} has no address, skipping.`);
@@ -267,9 +317,10 @@ export class TransactionQueue {
               `💰 New transaction found: ${tx.tronId} - ${tx.amount} USDT for account ${account.id}`,
             );
 
-            if (tx.amount <= this.FIXED_FEE) {
+            const commission = await this.getCardFee();
+            if (commission.type === 'FIXED' && tx.amount <= commission.rate) {
               this.logger.warn(
-                `Transaction is less than or equal to fixed fee (${this.FIXED_FEE} USDT), skipping: ${tx.tronId} - ${tx.amount} USDT for account ${account.id}`,
+                `Transaction is less than or equal to card fee (${commission.rate} USDT), skipping: ${tx.tronId} - ${tx.amount} USDT for account ${account.id}`,
               );
               continue;
             }
@@ -278,7 +329,7 @@ export class TransactionQueue {
               'successful-transaction',
               {
                 account: account,
-                amount: tx.amount - this.FIXED_FEE,
+                amount: this.processFee(tx.amount, commission),
                 tronId: tx.tronId,
               },
               {

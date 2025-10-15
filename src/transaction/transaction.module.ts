@@ -22,5 +22,6 @@ import { TransactionController } from './transaction.controller';
   ],
   providers: [TransactionCronService, TransactionTronService, TransactionQueue],
   controllers: [TransactionController],
+  exports: [TransactionQueue],
 })
 export class TransactionModule {}

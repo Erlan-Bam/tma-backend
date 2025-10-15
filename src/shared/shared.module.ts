@@ -6,10 +6,11 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { BotService } from './services/bot.service';
 import { ZephyrService } from './services/zephyr.service';
 import { TronService } from './services/tron.service';
+import { TransactionModule } from 'src/transaction/transaction.module';
 
 @Global()
 @Module({
-  imports: [JwtModule.register({})],
+  imports: [JwtModule.register({}), TransactionModule],
   providers: [
     PrismaService,
     BotService,

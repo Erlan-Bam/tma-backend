@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { TransactionStatus } from '@prisma/client';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { ZephyrService } from './zephyr.service';
+import { TransactionQueue } from 'src/transaction/transaction.queue';
 
 @Injectable()
 export class CronService {
@@ -11,6 +12,7 @@ export class CronService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private transactionQueue: TransactionQueue,
     private zephyr: ZephyrService,
   ) {}
 
@@ -30,6 +32,16 @@ export class CronService {
       this.logger.log(`Expired transactions updated: ${transactions.count}`);
     } catch (error) {
       this.logger.error('Error in handleExpiredTransactions: ' + error);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async handleCommisionUpdate() {
+    try {
+      await this.transactionQueue.loadCardFee();
+      this.logger.log('Commission rate cache refreshed successfully');
+    } catch (error) {
+      this.logger.error('Error in handleCommisionUpdate: ' + error);
     }
   }
 
