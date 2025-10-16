@@ -1,20 +1,17 @@
 import { HttpException, Injectable, Logger } from '@nestjs/common';
 import { Account } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
-import { TmaAuthDto } from './dto/tma-auth.dto';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
-import * as crypto from 'crypto';
-import { ParsedInitData } from './types/telegram.types';
+import * as bcrypt from 'bcryptjs';
 import { TronService } from 'src/shared/services/tron.service';
+import { TmaDto } from './dto/tma-auth.dto';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private readonly JWT_ACCESS_SECRET: string;
-  private readonly JWT_REFRESH_SECRET: string;
-  private readonly BOT_TOKEN: string;
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -23,9 +20,6 @@ export class AuthService {
     private tronService: TronService,
   ) {
     this.JWT_ACCESS_SECRET = this.configService.getOrThrow('JWT_ACCESS_SECRET');
-    this.JWT_REFRESH_SECRET =
-      this.configService.getOrThrow('JWT_REFRESH_SECRET');
-    this.BOT_TOKEN = this.configService.getOrThrow('TELEGRAM_BOT_TOKEN');
   }
   async generateAccessToken(account: Account): Promise<string> {
     return await this.jwtService.signAsync(
@@ -42,34 +36,22 @@ export class AuthService {
     );
   }
 
-  async tmaAuth(data: TmaAuthDto) {
-    const parsedData = this.validateInitData(data.initData, this.BOT_TOKEN);
-
-    if (!parsedData) {
-      console.log('❌ Validation failed - Invalid Telegram data');
-      throw new HttpException('Invalid Telegram data', 400);
-    }
-
-    if (!parsedData.user || !parsedData.auth_date) {
-      console.log('❌ Missing user or auth_date');
-      throw new HttpException('Invalid Telegram user data', 400);
-    }
-
-    console.log('👤 Telegram user:', parsedData.user);
-    const telegramUser = parsedData.user;
+  async tma(data: TmaDto) {
+    const { email, password, telegramId } = data;
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     let account = await this.prisma.account.findUnique({
-      where: { telegramId: telegramUser.id },
+      where: { telegramId: telegramId },
     });
 
     if (!account) {
+      if (!email || !password) {
+        throw new HttpException('Missing required fields', 400);
+      }
       try {
-        const tempEmail = `telegram_${telegramUser.id}@arctic.pay`;
-        const tempPassword = crypto.randomBytes(32).toString('hex');
-
         const childAccount = await this.zephyrService.createChildAccount(
-          tempEmail,
-          tempPassword,
+          email,
+          hashedPassword,
         );
 
         const wallet = await this.tronService.createAccount();
@@ -84,7 +66,7 @@ export class AuthService {
           if (referrer) {
             referrerId = referrer.id;
             this.logger.log(
-              `New user ${telegramUser.id} referred by ${referrer.telegramId}`,
+              `New user ${telegramId} referred by ${referrer.telegramId}`,
             );
           } else {
             this.logger.warn(
@@ -95,9 +77,9 @@ export class AuthService {
 
         account = await this.prisma.account.create({
           data: {
-            telegramId: telegramUser.id,
-            email: tempEmail,
-            password: tempPassword,
+            telegramId: telegramId,
+            email: email,
+            password: hashedPassword,
             childUserId: childAccount.childUserId,
             address: wallet.address,
             privateKey: wallet.privateKey,
@@ -107,98 +89,16 @@ export class AuthService {
         });
       } catch (error) {
         this.logger.error(
-          `Error creating TMA account telegramId=${telegramUser.id}: ` + error,
+          `Error creating TMA account telegramId=${telegramId}: ` + error,
         );
         throw new HttpException('Failed to create account', 500);
       }
+    } else {
+      const isMatch = await bcrypt.compare(password, account.password);
+      if (!isMatch) {
+        throw new HttpException('Invalid credentials', 401);
+      }
     }
-
-    const accessToken = await this.generateAccessToken(account);
-
-    return {
-      access_token: accessToken,
-      user: {
-        id: account.id,
-        telegramId: account.telegramId.toString(),
-        firstName: telegramUser.first_name,
-        lastName: telegramUser.last_name,
-        username: telegramUser.username,
-      },
-    };
-  }
-
-  private validateInitData(
-    initData: string,
-    botToken: string,
-  ): ParsedInitData | null {
-    try {
-      const urlParams = new URLSearchParams(initData);
-      const data: any = {};
-
-      for (const [key, value] of urlParams.entries()) {
-        if (key === 'user') {
-          try {
-            data[key] = JSON.parse(value);
-          } catch {
-            data[key] = value;
-          }
-        } else if (key === 'auth_date') {
-          data[key] = parseInt(value);
-        } else {
-          data[key] = value;
-        }
-      }
-      const hash = data.hash;
-      delete data.hash;
-
-      const dataCheckString = Object.keys(data)
-        .sort()
-        .map(
-          (key) =>
-            `${key}=${typeof data[key] === 'object' ? JSON.stringify(data[key]) : data[key]}`,
-        )
-        .join('\n');
-
-      const secretKey = crypto
-        .createHmac('sha256', 'WebAppData')
-        .update(botToken)
-        .digest();
-
-      const calculatedHash = crypto
-        .createHmac('sha256', secretKey)
-        .update(dataCheckString)
-        .digest('hex');
-
-      if (calculatedHash !== hash) {
-        console.log('❌ Hash mismatch - ПРОПУСКАЕМ ДЛЯ ТЕСТИРОВАНИЯ');
-        // return null; // Временно отключаем проверку хеша
-      }
-
-      const authDate = data.auth_date * 1000;
-      const now = Date.now();
-      const maxAge = 24 * 60 * 60 * 1000;
-
-      console.log('📅 Auth date timestamp:', authDate);
-      console.log('📅 Current timestamp:', now);
-      console.log('⏰ Age check:', now - authDate, 'vs max', maxAge);
-
-      if (now - authDate > maxAge) {
-        console.log('❌ Data too old - validation failed');
-        return null;
-      }
-
-      console.log('✅ Validation successful');
-      return { ...data, hash } as ParsedInitData;
-    } catch (error) {
-      console.error('Error validating Telegram init data:', error);
-      return null;
-    }
-  }
-
-  async test() {
-    let account = await this.prisma.account.findUnique({
-      where: { telegramId: 975314612 },
-    });
 
     const accessToken = await this.generateAccessToken(account);
 

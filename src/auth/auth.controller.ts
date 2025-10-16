@@ -1,5 +1,5 @@
-import { Body, Controller, Logger, Post, Get } from '@nestjs/common';
-import { TmaAuthDto } from './dto/tma-auth.dto';
+import { Body, Controller, Logger, Post } from '@nestjs/common';
+import { TmaDto } from './dto/tma-auth.dto';
 import { ApiTags, ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 
@@ -10,15 +10,16 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('tma')
-  @ApiOperation({ summary: 'Authenticate via Telegram Mini App' })
-  @ApiBody({ type: TmaAuthDto })
-  @ApiResponse({ status: 201, description: 'User authenticated via TMA' })
-  async tmaAuth(@Body() data: TmaAuthDto) {
-    return await this.authService.tmaAuth(data);
-  }
-
-  @Get('test')
-  async test() {
-    return await this.authService.test();
+  @ApiOperation({
+    summary: 'Register/Login a new user with email and password',
+  })
+  @ApiBody({ type: TmaDto })
+  @ApiResponse({
+    status: 201,
+    description: 'User successfully registered/logged in',
+  })
+  @ApiResponse({ status: 400, description: 'Email already exists' })
+  async tma(@Body() data: TmaDto) {
+    return await this.authService.tma(data);
   }
 }
