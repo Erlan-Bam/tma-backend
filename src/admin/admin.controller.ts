@@ -6,6 +6,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
@@ -13,6 +14,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from 'src/shared/guards/admin.guard';
 import { UpdateCommissionDto } from './dto/update-commision.dto';
+import { GetStatsDto } from './dto/get-stats.dto';
 
 @Controller('admin')
 @ApiBearerAuth('JWT')
@@ -53,6 +55,16 @@ export class AdminController {
   @Post('transfer/:userId')
   async transferUSDT(@Param('userId', ParseUUIDPipe) userId: string) {
     return await this.adminService.transferUSDT(userId);
+  }
+
+  @Get('general/stats')
+  async getGeneralStats(@Query() query: GetStatsDto) {
+    return await this.adminService.getGeneralStats(query);
+  }
+
+  @Get('balance/:userId')
+  async getUserBalance(@Param('userId', ParseUUIDPipe) userId: string) {
+    return await this.adminService.getUserBalance(userId);
   }
 
   @Get('balance/zephyr/:userId')

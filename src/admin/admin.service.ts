@@ -5,7 +5,9 @@ import { ZephyrService } from 'src/shared/services/zephyr.service';
 import { TransactionQueue } from 'src/transaction/transaction.queue';
 import { TronAddress } from 'src/transaction/types/tron.types';
 import { UpdateCommissionDto } from './dto/update-commision.dto';
-import { CommissionName } from '@prisma/client';
+import { CommissionName, TransactionStatus } from '@prisma/client';
+import { CardService } from 'src/card/card.service';
+import { GetStatsDto } from './dto/get-stats.dto';
 
 @Injectable()
 export class AdminService {
@@ -14,6 +16,7 @@ export class AdminService {
     private zephyr: ZephyrService,
     private prisma: PrismaService,
     private tron: TronService,
+    private card: CardService,
     private transactionQueue: TransactionQueue,
   ) {}
 
@@ -178,6 +181,68 @@ export class AdminService {
     }
   }
 
+  async getGeneralStats(query: GetStatsDto) {
+    try {
+      const where: any = { status: TransactionStatus.SUCCESS };
+
+      if (query.startDate || query.endDate) {
+        where.createdAt = {};
+
+        if (query.startDate) {
+          where.createdAt.gte = new Date(query.startDate);
+        }
+
+        if (query.endDate) {
+          where.createdAt.lte = new Date(query.endDate);
+        }
+      }
+
+      const [totalAccounts, totalTransactions, amount] = await Promise.all([
+        this.prisma.account.count(),
+        this.prisma.transaction.count(),
+        this.prisma.transaction.aggregate({
+          _sum: { amount: true },
+          where: where,
+        }),
+      ]);
+
+      return {
+        totalAccounts: totalAccounts,
+        totalTransactions: totalTransactions,
+        totalAmount: amount._sum.amount,
+      };
+    } catch (error) {
+      this.logger.error(`Error when getting general stats, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async getUserBalance(userId: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      const amount = await this.prisma.transaction.aggregate({
+        _sum: { amount: true },
+        where: { accountId: userId, status: TransactionStatus.SUCCESS },
+      });
+
+      return {
+        balance: amount._sum.amount,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error('Error when getting account by telegram id: ' + error);
+      throw new HttpException('Something went wrong', 500);
+    }
+  }
+
   async getTronBalance(id: string) {
     try {
       const account = await this.prisma.account.findUnique({
@@ -193,7 +258,10 @@ export class AdminService {
       return await this.tron.getTronBalance(address.base58, account.privateKey);
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      this.logger.error('Error when getting account by telegram id: ' + error);
+      this.logger.error(
+        'Error when getting general balance with commision by telegram id: ' +
+          error,
+      );
       throw new HttpException('Something went wrong', 500);
     }
   }
@@ -236,14 +304,13 @@ export class AdminService {
         },
       });
 
-      //FIX
-      // try {
-      //   await this.transactionQueue.loadCardFee();
-      // } catch (error) {
-      //   this.logger.error(
-      //     `Failed to reload card fee in transaction queue in admin service: ${error}`,
-      //   );
-      // }
+      try {
+        await this.card.loadCardFee();
+      } catch (error) {
+        this.logger.error(
+          `Failed to reload card fee in transaction queue in admin service: ${error}`,
+        );
+      }
 
       return { commission };
     } catch (error) {
