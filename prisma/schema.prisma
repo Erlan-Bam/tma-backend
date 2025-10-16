@@ -49,6 +49,7 @@ model Account {
   transactions       Transaction[]
   referrer           Account?  @relation("Referrals", fields: [referredBy], references: [id])
   referrals          Account[] @relation("Referrals")
+  bonuses            Bonus[]
 }
 
 model Transaction {
@@ -57,6 +58,16 @@ model Transaction {
   status         TransactionStatus
   tronId         String?  @unique
   zephyrId       String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  account        Account  @relation(fields: [accountId], references: [id])
+}
+
+model Bonus{
+  id             String   @id @default(uuid())
+  accountId      String
+  amount         Float
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

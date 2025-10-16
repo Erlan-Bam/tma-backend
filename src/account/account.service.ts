@@ -51,45 +51,7 @@ export class AccountService {
 
       const amount = this.processFee(referralBonus.amount);
 
-      await this.zephyr.topupWallet(account.childUserId, amount);
-      const { applications } = await this.zephyr.getTopupApplications(
-        account.childUserId,
-        {
-          page: 1,
-          limit: 5,
-          status: 0,
-        },
-      );
-
-      if (!applications || applications.length === 0) {
-        throw new Error('No topup applications found after wallet topup');
-      }
-
-      this.logger.debug(
-        `Found ${applications.length} topup applications for account ${referralBonus.accountId}`,
-      );
-
-      for (const app of applications) {
-        if (app.amount === amount) {
-          this.logger.debug(
-            `Matched application ${app.id} with amount ${app.amount}`,
-          );
-          try {
-            await this.zephyr.acceptTopupApplication(app.id);
-            return {
-              status: 'success',
-              message: `Topup application ${app.id} matched successfully`,
-              applications: applications,
-            };
-          } catch (error) {
-            this.logger.error(
-              `Error creating transaction or accepting application ${app.id}:`,
-              error?.message || error,
-            );
-            throw error;
-          }
-        }
-      }
+      await this.prisma.transaction.create({ data: {} });
     } catch (error) {
       this.logger.error('Error when adding referral bonus: ' + error);
       throw new HttpException('Something went wrong', 500);
