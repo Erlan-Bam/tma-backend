@@ -61,6 +61,7 @@ model Account {
 model Transaction {
   id             String   @id @default(uuid())
   accountId      String
+  amount         Float    @default(0)
   status         TransactionStatus
   tronId         String?  @unique
   zephyrId       String   @unique

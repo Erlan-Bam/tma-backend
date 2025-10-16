@@ -118,7 +118,7 @@ export class TransactionQueue {
 
   @Process('successful-transaction')
   async handleSuccessfulTransaction(job: Job<SuccessfulTransactionJob>) {
-    const { account, amount, tronId } = job.data;
+    const { account, amount, tronId, originalAmount } = job.data;
     const accountId = account.id;
 
     try {
@@ -173,6 +173,7 @@ export class TransactionQueue {
                     tronId: tronId,
                     status: TransactionStatus.SUCCESS,
                     zephyrId: app.id,
+                    amount: originalAmount,
                   },
                 });
                 await this.zephyr.acceptTopupApplication(app.id);
@@ -330,6 +331,13 @@ export class TransactionQueue {
       return amount * (1 - commission.rate / 100);
     }
   }
+  private reverseProcessFee(netAmount: number, commission: Commission): number {
+    if (commission.type === 'FIXED') {
+      return netAmount + commission.rate;
+    } else {
+      return netAmount / (1 - commission.rate / 100);
+    }
+  }
 
   private async processAccountTransactions(account: Partial<Account>) {
     if (!account.address) {
@@ -363,12 +371,15 @@ export class TransactionQueue {
               continue;
             }
 
+            const netAmount = this.processFee(tx.amount, commission);
+
             await this.queue.add(
               'successful-transaction',
               {
                 account: account,
-                amount: this.processFee(tx.amount, commission),
+                amount: netAmount,
                 tronId: tx.tronId,
+                originalAmount: tx.amount,
               },
               {
                 attempts: 5,

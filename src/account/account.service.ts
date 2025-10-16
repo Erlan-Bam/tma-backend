@@ -51,7 +51,9 @@ export class AccountService {
 
       const amount = this.processFee(referralBonus.amount);
 
-      await this.prisma.transaction.create({ data: {} });
+      await this.prisma.bonus.create({
+        data: { accountId: referralBonus.accountId, amount: amount },
+      });
     } catch (error) {
       this.logger.error('Error when adding referral bonus: ' + error);
       throw new HttpException('Something went wrong', 500);

@@ -11,4 +11,5 @@ export type SuccessfulTransactionJob = {
   amount: number;
   tronId: string;
   timestamp: Date;
+  originalAmount: number;
 };
