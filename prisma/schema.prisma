@@ -30,6 +30,12 @@ enum CommissionName {
   CARD_FEE
   TRANSACTION_FEE
 }
+enum BonusStatus {
+  PENDING
+  PROCESSING
+  REJECTED
+  COMPLETED
+}
 
 model Account {
   id                 String   @id @default(uuid())
@@ -68,6 +74,7 @@ model Bonus{
   id             String   @id @default(uuid())
   accountId      String
   amount         Float
+  status         BonusStatus @default(PENDING)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
