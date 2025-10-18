@@ -77,7 +77,7 @@ export class TransactionQueue {
     );
   }
 
-  @Process({ name: 'monitor-wallet-batch', concurrency: 3 })
+  @Process({ name: 'monitor-wallet-batch', concurrency: 1 }) // Sequential processing for 10 req/s
   async handleWalletBatch(job: Job<MonitorBatchJob>) {
     const { batchIndex, batchSize, offset } = job.data;
 
@@ -273,15 +273,15 @@ export class TransactionQueue {
     let processed = 0;
     let errors = 0;
 
-    // Optimized settings for 100 req/s Tron API limit
-    // Target: ~75 req/s with 25% safety margin
-    const CHUNK_SIZE = 25;
-    const RATE_LIMIT_DELAY = 300;
+    // Optimized settings for 10 req/s API limit
+    // Target: ~8 req/s with 20% safety margin
+    const CHUNK_SIZE = 2; // Process 2 accounts at a time
+    const RATE_LIMIT_DELAY = 250; // 250ms delay = 4 chunks/sec * 2 accounts = 8 req/s
 
     for (let i = 0; i < accounts.length; i += CHUNK_SIZE) {
       if (this.isWaiting) {
         this.logger.warn('⏸️ Waiting due to rate limit (429)...');
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await new Promise((resolve) => setTimeout(resolve, 3000)); // Increased wait time for lower rate limit
         this.isWaiting = false;
         this.logger.log('▶️ Resuming processing after rate limit wait');
       }
@@ -387,11 +387,11 @@ export class TransactionQueue {
                 attempts: 5,
                 backoff: {
                   type: 'exponential',
-                  delay: 2000,
+                  delay: 3000, // Increased backoff for lower rate limit
                 },
                 removeOnComplete: 100,
                 removeOnFail: 100,
-                delay: 1000,
+                delay: 2000, // Increased initial delay
                 jobId: `tx-${tx.tronId}`,
               },
             );

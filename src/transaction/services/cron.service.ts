@@ -7,8 +7,8 @@ import { InjectQueue } from '@nestjs/bull';
 @Injectable()
 export class TransactionCronService {
   private readonly logger = new Logger(TransactionCronService.name);
-  private readonly BATCH_SIZE = 3;
-  private readonly CONCURRENT_BATCHES = 3;
+  private readonly BATCH_SIZE = 2; // Reduced for 10 req/s limit
+  private readonly CONCURRENT_BATCHES = 1; // Sequential processing for rate limit
   private isRunning = false;
 
   constructor(
@@ -34,7 +34,7 @@ export class TransactionCronService {
       const totalBatches = Math.ceil(wallets / this.BATCH_SIZE);
 
       for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-        const delay = (batchIndex % this.CONCURRENT_BATCHES) * 1500;
+        const delay = (batchIndex % this.CONCURRENT_BATCHES) * 5000; // Increased delay for 10 req/s
 
         await this.queue.add(
           'monitor-wallet-batch',
@@ -48,7 +48,7 @@ export class TransactionCronService {
             attempts: 5,
             backoff: {
               type: 'exponential',
-              delay: 3000,
+              delay: 5000, // Increased backoff delay
             },
             removeOnComplete: true,
             removeOnFail: 100,
