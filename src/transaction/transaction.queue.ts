@@ -77,11 +77,19 @@ export class TransactionQueue {
     );
   }
 
-  @Process({ name: 'monitor-wallet-batch', concurrency: 1 }) // Sequential processing for 10 req/s
+  @Process({ name: 'monitor-wallet-batch', concurrency: 1 }) // Sequential processing for 5 req/s
   async handleWalletBatch(job: Job<MonitorBatchJob>) {
     const { batchIndex, batchSize, offset } = job.data;
 
     try {
+      // Check if we're in rate limit wait mode
+      if (this.isWaiting) {
+        this.logger.warn(
+          `⏸️ Batch ${batchIndex} skipped - waiting for rate limit cooldown`,
+        );
+        return { processed: 0, errors: 0, skipped: true };
+      }
+
       this.logger.log(
         `🔄 Processing batch ${batchIndex} (${offset}-${offset + batchSize})`,
       );
@@ -273,55 +281,42 @@ export class TransactionQueue {
     let processed = 0;
     let errors = 0;
 
-    const CHUNK_SIZE = 2;
-    const RATE_LIMIT_DELAY = 250;
-    const RATE_LIMIT_WAIT = 60000;
-    for (let i = 0; i < accounts.length; i += CHUNK_SIZE) {
-      if (this.isWaiting) {
-        this.logger.warn(
-          `⏸️ Waiting ${RATE_LIMIT_WAIT}ms due to rate limit (429)...`,
-        );
-        await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_WAIT));
-        this.isWaiting = false;
-        this.logger.log('▶️ Resuming processing after rate limit wait');
-      }
+    this.logger.log(
+      `🚀 Processing ${accounts.length} accounts simultaneously in this batch`,
+    );
 
-      const chunk = accounts.slice(i, i + CHUNK_SIZE);
-
-      const results = await Promise.allSettled(
-        chunk.map(async (account) => {
-          try {
-            await this.processAccountTransactions(account);
-            processed++;
-          } catch (error) {
-            if (this.isRateLimitError(error)) {
-              this.logger.warn(
-                `⏸️ Rate limit detected for account ${account.id}, setting wait flag`,
-              );
-              this.isWaiting = true;
-            }
-            this.logger.error(`Error processing account ${account.id}:`, error);
-            errors++;
-          }
-        }),
-      );
-
-      results.forEach((result) => {
-        if (result.status === 'rejected') {
-          const error = result.reason;
+    await Promise.allSettled(
+      accounts.map(async (account) => {
+        try {
+          await this.processAccountTransactions(account);
+          processed++;
+        } catch (error) {
           if (this.isRateLimitError(error)) {
             this.logger.warn(
-              `⏸️ Rate limit detected in batch processing, setting wait flag`,
+              `⏸️ Rate limit (429) detected for account ${account.id} - stopping all requests`,
             );
             this.isWaiting = true;
-          }
-        }
-      });
 
-      if (i + CHUNK_SIZE < accounts.length) {
-        await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY));
-      }
-    }
+            setTimeout(() => {
+              this.isWaiting = false;
+              this.logger.log(
+                '▶️ Rate limit cooldown complete - resuming requests',
+              );
+            }, 60000);
+          }
+          this.logger.error(
+            `Error processing account ${account.id}:`,
+            error?.message || error,
+          );
+          errors++;
+          throw error;
+        }
+      }),
+    );
+
+    this.logger.log(
+      `✅ Batch processing complete: ${processed} successful, ${errors} errors`,
+    );
 
     return { processed, errors };
   }
@@ -333,6 +328,7 @@ export class TransactionQueue {
       return amount * (1 - commission.rate / 100);
     }
   }
+
   private reverseProcessFee(netAmount: number, commission: Commission): number {
     if (commission.type === 'FIXED') {
       return netAmount + commission.rate;
@@ -387,11 +383,11 @@ export class TransactionQueue {
                 attempts: 5,
                 backoff: {
                   type: 'exponential',
-                  delay: 3000, // Increased backoff for lower rate limit
+                  delay: 3000,
                 },
                 removeOnComplete: 100,
                 removeOnFail: 100,
-                delay: 2000, // Increased initial delay
+                delay: 2000,
                 jobId: `tx-${tx.tronId}`,
               },
             );
@@ -406,9 +402,17 @@ export class TransactionQueue {
     } catch (error) {
       if (this.isRateLimitError(error)) {
         this.logger.warn(
-          `⏸️ Rate limit detected when fetching transactions for account ${account.id}`,
+          `⏸️ Rate limit (429) detected when fetching transactions for account ${account.id} - stopping all requests`,
         );
         this.isWaiting = true;
+
+        // Set a timer to reset the flag after 60 seconds
+        setTimeout(() => {
+          this.isWaiting = false;
+          this.logger.log(
+            '▶️ Rate limit cooldown complete - resuming requests',
+          );
+        }, 60000);
       }
       throw error;
     }
