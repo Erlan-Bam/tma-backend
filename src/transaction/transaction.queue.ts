@@ -406,7 +406,6 @@ export class TransactionQueue {
         );
         this.isWaiting = true;
 
-        // Set a timer to reset the flag after 60 seconds
         setTimeout(() => {
           this.isWaiting = false;
           this.logger.log(
