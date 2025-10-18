@@ -273,15 +273,15 @@ export class TransactionQueue {
     let processed = 0;
     let errors = 0;
 
-    // Optimized settings for 10 req/s API limit
-    // Target: ~8 req/s with 20% safety margin
-    const CHUNK_SIZE = 2; // Process 2 accounts at a time
-    const RATE_LIMIT_DELAY = 250; // 250ms delay = 4 chunks/sec * 2 accounts = 8 req/s
-
+    const CHUNK_SIZE = 2;
+    const RATE_LIMIT_DELAY = 250;
+    const RATE_LIMIT_WAIT = 60000;
     for (let i = 0; i < accounts.length; i += CHUNK_SIZE) {
       if (this.isWaiting) {
-        this.logger.warn('⏸️ Waiting due to rate limit (429)...');
-        await new Promise((resolve) => setTimeout(resolve, 3000)); // Increased wait time for lower rate limit
+        this.logger.warn(
+          `⏸️ Waiting ${RATE_LIMIT_WAIT}ms due to rate limit (429)...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_WAIT));
         this.isWaiting = false;
         this.logger.log('▶️ Resuming processing after rate limit wait');
       }
