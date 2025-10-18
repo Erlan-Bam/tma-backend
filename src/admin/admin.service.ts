@@ -353,8 +353,7 @@ export class AdminService {
 
   async getMaintenanceStatus() {
     try {
-      const isMaintenanceMode =
-        this.maintenanceService.getMaintenanceStatus();
+      const isMaintenanceMode = this.maintenanceService.getMaintenanceStatus();
       return {
         isTechWork: isMaintenanceMode,
         message: isMaintenanceMode
@@ -471,6 +470,154 @@ export class AdminService {
       this.logger.error(
         `Error when setting website tech work, error: ${error}`,
       );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async getQueueStatus() {
+    try {
+      const queue = this.transactionQueue['queue'];
+      const waiting = await queue.getWaiting();
+      const active = await queue.getActive();
+      const failed = await queue.getFailed();
+      const completed = await queue.getCompleted();
+      const delayed = await queue.getDelayed();
+
+      return {
+        status: 'success',
+        queue: {
+          waiting: waiting.length,
+          active: active.length,
+          failed: failed.length,
+          completed: completed.length,
+          delayed: delayed.length,
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Error when getting queue status, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async getFailedJobs(limit: number = 50) {
+    try {
+      const queue = this.transactionQueue['queue'];
+      const failed = await queue.getFailed(0, limit - 1);
+
+      const failedJobsDetails = failed.map((job) => ({
+        id: job.id,
+        name: job.name,
+        data: job.data,
+        failedReason: job.failedReason,
+        stacktrace: job.stacktrace,
+        attemptsMade: job.attemptsMade,
+        timestamp: job.timestamp,
+        processedOn: job.processedOn,
+        finishedOn: job.finishedOn,
+      }));
+
+      return {
+        status: 'success',
+        count: failed.length,
+        jobs: failedJobsDetails,
+      };
+    } catch (error) {
+      this.logger.error(`Error when getting failed jobs, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async retryFailedJob(jobId: string) {
+    try {
+      const queue = this.transactionQueue['queue'];
+      const job = await queue.getJob(jobId);
+
+      if (!job) {
+        throw new HttpException('Job not found', 404);
+      }
+
+      await job.retry();
+
+      return {
+        status: 'success',
+        message: `Job ${jobId} has been queued for retry`,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(`Error when retrying failed job, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async retryAllFailedJobs() {
+    try {
+      const queue = this.transactionQueue['queue'];
+      const failed = await queue.getFailed();
+
+      let retriedCount = 0;
+      for (const job of failed) {
+        try {
+          await job.retry();
+          retriedCount++;
+        } catch (error) {
+          this.logger.error(`Failed to retry job ${job.id}: ${error.message}`);
+        }
+      }
+
+      return {
+        status: 'success',
+        message: `Retried ${retriedCount} out of ${failed.length} failed jobs`,
+        retriedCount,
+        totalFailed: failed.length,
+      };
+    } catch (error) {
+      this.logger.error(`Error when retrying all failed jobs, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async clearFailedJobs() {
+    try {
+      const queue = this.transactionQueue['queue'];
+      const failed = await queue.getFailed();
+
+      for (const job of failed) {
+        await job.remove();
+      }
+
+      return {
+        status: 'success',
+        message: `Cleared ${failed.length} failed jobs`,
+        clearedCount: failed.length,
+      };
+    } catch (error) {
+      this.logger.error(`Error when clearing failed jobs, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async removeFailedJob(jobId: string) {
+    try {
+      const queue = this.transactionQueue['queue'];
+      const job = await queue.getJob(jobId);
+
+      if (!job) {
+        throw new HttpException('Job not found', 404);
+      }
+
+      await job.remove();
+
+      return {
+        status: 'success',
+        message: `Job ${jobId} has been removed`,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(`Error when removing failed job, error: ${error}`);
       throw new HttpException('Something Went Wrong', 500);
     }
   }

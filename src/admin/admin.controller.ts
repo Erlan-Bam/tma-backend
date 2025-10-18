@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -15,6 +16,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from 'src/shared/guards/admin.guard';
 import { UpdateCommissionDto } from './dto/update-commision.dto';
 import { GetStatsDto } from './dto/get-stats.dto';
+import { GetFailedJobsDto } from './dto/queue-management.dto';
 
 @Controller('admin')
 @ApiBearerAuth('JWT')
@@ -125,5 +127,35 @@ export class AdminController {
   @Patch('website-tech-work')
   async setWebsiteTechWork(@Body() data: { isWebsiteTechWork: boolean }) {
     return await this.adminService.setWebsiteTechWork(data.isWebsiteTechWork);
+  }
+
+  @Get('queue/status')
+  async getQueueStatus() {
+    return await this.adminService.getQueueStatus();
+  }
+
+  @Get('queue/failed')
+  async getFailedJobs(@Query() query: GetFailedJobsDto) {
+    return await this.adminService.getFailedJobs(query.limit);
+  }
+
+  @Post('queue/retry/:jobId')
+  async retryFailedJob(@Param('jobId') jobId: string) {
+    return await this.adminService.retryFailedJob(jobId);
+  }
+
+  @Post('queue/retry-all')
+  async retryAllFailedJobs() {
+    return await this.adminService.retryAllFailedJobs();
+  }
+
+  @Delete('queue/failed/clear')
+  async clearFailedJobs() {
+    return await this.adminService.clearFailedJobs();
+  }
+
+  @Delete('queue/failed/:jobId')
+  async removeFailedJob(@Param('jobId') jobId: string) {
+    return await this.adminService.removeFailedJob(jobId);
   }
 }
