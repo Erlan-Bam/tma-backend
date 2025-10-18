@@ -106,4 +106,24 @@ export class AdminController {
   async setMaintenance(@Body() data: { isTechWork: boolean }) {
     return await this.adminService.setMaintenance(data.isTechWork);
   }
+
+  @Get('website-tech-work/status')
+  async getWebsiteTechWorkStatus() {
+    return await this.adminService.getWebsiteTechWorkStatus();
+  }
+
+  @Post('website-tech-work/enable')
+  async enableWebsiteTechWork() {
+    return await this.adminService.enableWebsiteTechWork();
+  }
+
+  @Post('website-tech-work/disable')
+  async disableWebsiteTechWork() {
+    return await this.adminService.disableWebsiteTechWork();
+  }
+
+  @Patch('website-tech-work')
+  async setWebsiteTechWork(@Body() data: { isWebsiteTechWork: boolean }) {
+    return await this.adminService.setWebsiteTechWork(data.isWebsiteTechWork);
+  }
 }

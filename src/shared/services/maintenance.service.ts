@@ -4,6 +4,7 @@ import { Injectable, Logger } from '@nestjs/common';
 export class MaintenanceService {
   private readonly logger = new Logger(MaintenanceService.name);
   private isTechWork = false;
+  private isWebsiteTechWork = false;
 
   getMaintenanceStatus(): boolean {
     return this.isTechWork;
@@ -20,5 +21,24 @@ export class MaintenanceService {
 
   disableMaintenance(): void {
     this.setMaintenanceMode(false);
+  }
+
+  getWebsiteTechWorkStatus(): boolean {
+    return this.isWebsiteTechWork;
+  }
+
+  setWebsiteTechWorkMode(status: boolean): void {
+    this.isWebsiteTechWork = status;
+    this.logger.log(
+      `Website tech work mode ${status ? 'enabled' : 'disabled'}`,
+    );
+  }
+
+  enableWebsiteTechWork(): void {
+    this.setWebsiteTechWorkMode(true);
+  }
+
+  disableWebsiteTechWork(): void {
+    this.setWebsiteTechWorkMode(false);
   }
 }

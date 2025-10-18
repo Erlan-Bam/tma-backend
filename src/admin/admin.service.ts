@@ -409,4 +409,69 @@ export class AdminService {
       throw new HttpException('Something Went Wrong', 500);
     }
   }
+
+  async getWebsiteTechWorkStatus() {
+    try {
+      const isWebsiteTechWorkMode =
+        this.maintenanceService.getWebsiteTechWorkStatus();
+      return {
+        isWebsiteTechWork: isWebsiteTechWorkMode,
+        message: isWebsiteTechWorkMode
+          ? 'Website is under technical work'
+          : 'Website is operational',
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error when getting website tech work status, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async enableWebsiteTechWork() {
+    try {
+      this.maintenanceService.enableWebsiteTechWork();
+      return {
+        isWebsiteTechWork: true,
+        message: 'Website tech work mode enabled',
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error when enabling website tech work, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async disableWebsiteTechWork() {
+    try {
+      this.maintenanceService.disableWebsiteTechWork();
+      return {
+        isWebsiteTechWork: false,
+        message: 'Website tech work mode disabled',
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error when disabling website tech work, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async setWebsiteTechWork(isWebsiteTechWork: boolean) {
+    try {
+      this.maintenanceService.setWebsiteTechWorkMode(isWebsiteTechWork);
+      return {
+        isWebsiteTechWork: isWebsiteTechWork,
+        message: isWebsiteTechWork
+          ? 'Website tech work mode enabled'
+          : 'Website tech work mode disabled',
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error when setting website tech work, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
 }
