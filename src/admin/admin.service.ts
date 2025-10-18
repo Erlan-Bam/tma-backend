@@ -212,19 +212,23 @@ export class AdminService {
         }
       }
 
-      const [totalAccounts, totalTransactions, amount] = await Promise.all([
-        this.prisma.account.count(),
-        this.prisma.transaction.count(),
-        this.prisma.transaction.aggregate({
-          _sum: { amount: true },
-          where: where,
-        }),
-      ]);
+      const [totalAccounts, totalTransactions, cards, amount] =
+        await Promise.all([
+          this.prisma.account.count(),
+          this.prisma.transaction.count(),
+          this.getAllCards(),
+          this.prisma.transaction.aggregate({
+            _sum: { amount: true },
+            where: where,
+          }),
+        ]);
 
       return {
         totalAccounts: totalAccounts,
         totalTransactions: totalTransactions,
+        totalCards: cards.total,
         totalAmount: amount._sum.amount,
+        zephyrFee: cards.total,
       };
     } catch (error) {
       this.logger.error(`Error when getting general stats, error: ${error}`);
