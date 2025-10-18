@@ -7,7 +7,7 @@ import { InjectQueue } from '@nestjs/bull';
 @Injectable()
 export class TransactionCronService {
   private readonly logger = new Logger(TransactionCronService.name);
-  private readonly BATCH_SIZE = 10;
+  private readonly BATCH_SIZE = 3;
   private readonly CONCURRENT_BATCHES = 3;
   private isRunning = false;
 
