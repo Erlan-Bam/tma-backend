@@ -499,7 +499,7 @@ export class AdminService {
     }
   }
 
-  async getFailedJobs(limit: number = 50) {
+  async getFailedJobs(limit: number = 100) {
     try {
       const queue = this.transactionQueue['queue'];
       const failed = await queue.getFailed(0, limit - 1);

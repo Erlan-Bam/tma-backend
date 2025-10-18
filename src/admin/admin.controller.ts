@@ -16,7 +16,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from 'src/shared/guards/admin.guard';
 import { UpdateCommissionDto } from './dto/update-commision.dto';
 import { GetStatsDto } from './dto/get-stats.dto';
-import { GetFailedJobsDto } from './dto/queue-management.dto';
+import { PaginationDto } from 'src/shared/dto/pagination.dto';
 
 @Controller('admin')
 @ApiBearerAuth('JWT')
@@ -135,7 +135,7 @@ export class AdminController {
   }
 
   @Get('queue/failed')
-  async getFailedJobs(@Query() query: GetFailedJobsDto) {
+  async getFailedJobs(@Query() query: PaginationDto) {
     return await this.adminService.getFailedJobs(query.limit);
   }
 
