@@ -39,6 +39,7 @@ export class AuthService {
   async tma(data: TmaDto) {
     const { email, password, telegramId } = data;
     const hashedPassword = await bcrypt.hash(password, 10);
+    console.log('TMA Auth attempt for telegramId:', telegramId);
 
     let account = await this.prisma.account.findUnique({
       where: { telegramId: telegramId },
