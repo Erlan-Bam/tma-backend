@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { SharedModule } from './shared/shared.module';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -11,6 +11,7 @@ import * as Joi from 'joi';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TransactionModule } from './transaction/transaction.module';
 import { BullModule } from '@nestjs/bull';
+import { MaintenanceMiddleware } from './shared/middleware/maintenance.middleware';
 
 @Module({
   imports: [
@@ -70,4 +71,8 @@ import { BullModule } from '@nestjs/bull';
     TransactionModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(MaintenanceMiddleware).forRoutes('*');
+  }
+}

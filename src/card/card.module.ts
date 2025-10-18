@@ -4,6 +4,7 @@ import { CardController } from './card.controller';
 
 @Module({
   providers: [CardService],
-  controllers: [CardController]
+  controllers: [CardController],
+  exports: [CardService],
 })
 export class CardModule {}

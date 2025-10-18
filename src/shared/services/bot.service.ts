@@ -5,9 +5,9 @@ import {
   OnModuleInit,
   OnModuleDestroy,
 } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { Bot, InlineKeyboard } from 'grammy';
+import { MaintenanceService } from './maintenance.service';
 
 @Injectable()
 export class BotService implements OnModuleInit, OnModuleDestroy {
@@ -15,8 +15,8 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
   private bot: Bot;
 
   constructor(
-    private prisma: PrismaService,
     private configService: ConfigService,
+    private maintenanceService: MaintenanceService,
   ) {
     const token = this.configService.getOrThrow<string>('TELEGRAM_BOT_TOKEN');
     this.bot = new Bot(token);
@@ -29,8 +29,35 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
     this.setup();
   }
 
+  private async sendMaintenanceMessage(ctx: any): Promise<boolean> {
+    if (this.maintenanceService.getMaintenanceStatus()) {
+      const maintenanceMessage = `
+🔧 *System Maintenance*
+
+Arctic Pay is currently under maintenance.
+
+We're working hard to improve our services and will be back online shortly.
+
+⏰ Please try again later.
+
+Thank you for your patience! 🙏
+
+For urgent matters, contact support:
+💬 @arctic_pay_support
+      `.trim();
+
+      await ctx.reply(maintenanceMessage, {
+        parse_mode: 'Markdown',
+      });
+      return true;
+    }
+    return false;
+  }
+
   private setup() {
     this.bot.command('start', async (ctx) => {
+      if (await this.sendMaintenanceMessage(ctx)) return;
+
       const url = this.configService.getOrThrow<string>('FRONTEND_URL');
 
       const user = ctx.from;
@@ -80,6 +107,8 @@ Welcome to Arctic Pay, a new way to manage your finances! 💎
 
     // Добавляем команду help
     this.bot.command('help', async (ctx) => {
+      if (await this.sendMaintenanceMessage(ctx)) return;
+
       const helpMessage = `
 🔧 Arctic Pay Commands
 
@@ -103,6 +132,8 @@ Welcome to Arctic Pay, a new way to manage your finances! 💎
 
     // Добавляем команду support
     this.bot.command('support', async (ctx) => {
+      if (await this.sendMaintenanceMessage(ctx)) return;
+
       const supportMessage = `
 🆘 Need Help?
 
@@ -134,6 +165,8 @@ Arctic Pay staff will never ask for your passwords or private keys in DMs.
 
     // Добавляем команду about
     this.bot.command('about', async (ctx) => {
+      if (await this.sendMaintenanceMessage(ctx)) return;
+
       const aboutMessage = `
 🏢 About Arctic Pay
 

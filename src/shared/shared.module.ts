@@ -7,6 +7,7 @@ import { BotService } from './services/bot.service';
 import { ZephyrService } from './services/zephyr.service';
 import { TronService } from './services/tron.service';
 import { TransactionModule } from 'src/transaction/transaction.module';
+import { MaintenanceService } from './services/maintenance.service';
 
 @Global()
 @Module({
@@ -19,6 +20,7 @@ import { TransactionModule } from 'src/transaction/transaction.module';
     CronService,
     JwtStrategy,
     JwtService,
+    MaintenanceService,
   ],
   exports: [
     PrismaService,
@@ -28,6 +30,7 @@ import { TransactionModule } from 'src/transaction/transaction.module';
     CronService,
     JwtStrategy,
     JwtService,
+    MaintenanceService,
   ],
 })
 export class SharedModule {}

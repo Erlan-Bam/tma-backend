@@ -8,6 +8,7 @@ import { UpdateCommissionDto } from './dto/update-commision.dto';
 import { CommissionName, TransactionStatus } from '@prisma/client';
 import { CardService } from 'src/card/card.service';
 import { GetStatsDto } from './dto/get-stats.dto';
+import { MaintenanceService } from 'src/shared/services/maintenance.service';
 
 @Injectable()
 export class AdminService {
@@ -18,6 +19,7 @@ export class AdminService {
     private tron: TronService,
     private card: CardService,
     private transactionQueue: TransactionQueue,
+    private maintenanceService: MaintenanceService,
   ) {}
 
   async getAllCards() {
@@ -345,6 +347,65 @@ export class AdminService {
       return { commission };
     } catch (error) {
       this.logger.error(`Error when updating card fee, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async getMaintenanceStatus() {
+    try {
+      const isMaintenanceMode =
+        this.maintenanceService.getMaintenanceStatus();
+      return {
+        isTechWork: isMaintenanceMode,
+        message: isMaintenanceMode
+          ? 'System is under maintenance'
+          : 'System is operational',
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error when getting maintenance status, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async enableMaintenance() {
+    try {
+      this.maintenanceService.enableMaintenance();
+      return {
+        isTechWork: true,
+        message: 'Maintenance mode enabled',
+      };
+    } catch (error) {
+      this.logger.error(`Error when enabling maintenance, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async disableMaintenance() {
+    try {
+      this.maintenanceService.disableMaintenance();
+      return {
+        isTechWork: false,
+        message: 'Maintenance mode disabled',
+      };
+    } catch (error) {
+      this.logger.error(`Error when disabling maintenance, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async setMaintenance(isTechWork: boolean) {
+    try {
+      this.maintenanceService.setMaintenanceMode(isTechWork);
+      return {
+        isTechWork: isTechWork,
+        message: isTechWork
+          ? 'Maintenance mode enabled'
+          : 'Maintenance mode disabled',
+      };
+    } catch (error) {
+      this.logger.error(`Error when setting maintenance, error: ${error}`);
       throw new HttpException('Something Went Wrong', 500);
     }
   }

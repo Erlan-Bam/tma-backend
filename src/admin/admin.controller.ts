@@ -86,4 +86,24 @@ export class AdminController {
   async updateTransactionFee(@Body() data: UpdateCommissionDto) {
     return await this.adminService.updateTransactionFee(data);
   }
+
+  @Get('maintenance/status')
+  async getMaintenanceStatus() {
+    return await this.adminService.getMaintenanceStatus();
+  }
+
+  @Post('maintenance/enable')
+  async enableMaintenance() {
+    return await this.adminService.enableMaintenance();
+  }
+
+  @Post('maintenance/disable')
+  async disableMaintenance() {
+    return await this.adminService.disableMaintenance();
+  }
+
+  @Patch('maintenance')
+  async setMaintenance(@Body() data: { isTechWork: boolean }) {
+    return await this.adminService.setMaintenance(data.isTechWork);
+  }
 }
