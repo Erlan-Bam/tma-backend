@@ -11,7 +11,7 @@ export const USED_SCENES = {
   100: 'Supports ad account funding & payments for cross-border platforms (Facebook, Google, TikTok, etc.)',
   101: 'Cross-border e-commerce payments, flight bookings, hotel reservations, and more',
   102: 'Membership renewals, API services, cloud platforms, and automated billing',
-  103: 'Apple Pay Dedicated Cards',
+  104: 'Apple Pay Dedicated Cards',
 };
 
 export interface TopupApplications {

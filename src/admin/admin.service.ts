@@ -9,6 +9,8 @@ import { CommissionName, TransactionStatus } from '@prisma/client';
 import { CardService } from 'src/card/card.service';
 import { GetStatsDto } from './dto/get-stats.dto';
 import { MaintenanceService } from 'src/shared/services/maintenance.service';
+import { PaginationDto } from 'src/shared/dto/pagination.dto';
+import { GetUserTransactionsDto } from './dto/get-user-transactions.dto';
 
 @Injectable()
 export class AdminService {
@@ -27,6 +29,17 @@ export class AdminService {
       return await this.zephyr.getAllCards();
     } catch (error) {
       this.logger.error(`Error when getting all cards, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async getUserTransactions(query: GetUserTransactionsDto) {
+    try {
+      return await this.zephyr.getUserTransactions(query);
+    } catch (error) {
+      this.logger.error(
+        `Error when getting user transactions for childUserId=${query.childUserId}, error: ${error}`,
+      );
       throw new HttpException('Something Went Wrong', 500);
     }
   }

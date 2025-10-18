@@ -18,6 +18,7 @@ import {
 } from '../types/zephyr.types';
 import { CreateCardDto } from 'src/card/dto/create-card.dto';
 import { TopupCardDto } from 'src/card/dto/topup-card.dto';
+import { GetUserTransactionsDto } from 'src/admin/dto/get-user-transactions.dto';
 
 @Injectable()
 export class ZephyrService {
@@ -781,6 +782,37 @@ export class ZephyrService {
       }
     } catch (error) {
       this.logger.error('Error from zephyr when enabling user: ' + error);
+      throw error;
+    }
+  }
+
+  async getUserTransactions(query: GetUserTransactionsDto) {
+    try {
+      const response = await this.sendRequest({
+        childUserId: query.childUserId,
+        method: 'GET',
+        endpoint: `/open-api/child/card/transaction`,
+        params: {
+          cardId: query.cardId,
+          pageNum: query.page,
+          pageSize: query.limit,
+          txnStatus: query.txnStatus,
+        },
+      });
+      if (response.code === 200) {
+        return {
+          transactions: response.rows,
+        };
+      } else {
+        this.logger.debug(
+          `Getting user transactions resulted in operation not successful for childUserId=${query.childUserId}, response: ${JSON.stringify(response)}`,
+        );
+        throw new Error('Operation not successful');
+      }
+    } catch (error) {
+      this.logger.error(
+        'Error from zephyr when getting user transactions' + error,
+      );
       throw error;
     }
   }

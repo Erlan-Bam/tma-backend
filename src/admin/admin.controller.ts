@@ -17,6 +17,7 @@ import { AdminGuard } from 'src/shared/guards/admin.guard';
 import { UpdateCommissionDto } from './dto/update-commision.dto';
 import { GetStatsDto } from './dto/get-stats.dto';
 import { PaginationDto } from 'src/shared/dto/pagination.dto';
+import { GetUserTransactionsDto } from './dto/get-user-transactions.dto';
 
 @Controller('admin')
 @ApiBearerAuth('JWT')
@@ -27,6 +28,11 @@ export class AdminController {
   @Get('cards')
   async getAllCards() {
     return await this.adminService.getAllCards();
+  }
+
+  @Get('user/transactions')
+  async getUserTransactions(@Query() query: GetUserTransactionsDto) {
+    return await this.adminService.getUserTransactions(query);
   }
 
   @Get('accounts')
