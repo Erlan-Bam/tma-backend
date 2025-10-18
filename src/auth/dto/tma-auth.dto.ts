@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 export class TmaDto {
   @ApiPropertyOptional({
     description: 'User email address. Not required if user already exists.',
@@ -21,6 +27,7 @@ export class TmaDto {
     description: 'Telegram user ID',
     example: 123456789,
   })
+  @IsNumber()
   telegramId!: number;
 
   @ApiProperty({
