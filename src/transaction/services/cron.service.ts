@@ -7,8 +7,9 @@ import { InjectQueue } from '@nestjs/bull';
 @Injectable()
 export class TransactionCronService {
   private readonly logger = new Logger(TransactionCronService.name);
-  private readonly BATCH_SIZE = 5;
-  private readonly CONCURRENT_BATCHES = 2;
+  private readonly BATCH_SIZE = 30;
+  private readonly CONCURRENT_BATCHES = 3;
+  private isRunning = false;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -17,6 +18,14 @@ export class TransactionCronService {
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async handleWalletMonitoring() {
+    if (this.isRunning) {
+      this.logger.warn(
+        '⏸️ Previous wallet monitoring still running, skipping this cycle to prevent overlap',
+      );
+      return;
+    }
+
+    this.isRunning = true;
     try {
       const wallets = await this.prisma.account.count();
 
@@ -36,7 +45,7 @@ export class TransactionCronService {
           },
           {
             delay,
-            attempts: 2,
+            attempts: 5,
             backoff: {
               type: 'exponential',
               delay: 3000,
@@ -52,6 +61,8 @@ export class TransactionCronService {
       );
     } catch (error) {
       this.logger.error('Error scheduling wallet monitoring:', error);
+    } finally {
+      this.isRunning = false;
     }
   }
 

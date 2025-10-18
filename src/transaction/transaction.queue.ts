@@ -77,7 +77,7 @@ export class TransactionQueue {
     );
   }
 
-  @Process('monitor-wallet-batch')
+  @Process({ name: 'monitor-wallet-batch', concurrency: 3 })
   async handleWalletBatch(job: Job<MonitorBatchJob>) {
     const { batchIndex, batchSize, offset } = job.data;
 
@@ -273,8 +273,10 @@ export class TransactionQueue {
     let processed = 0;
     let errors = 0;
 
-    const CHUNK_SIZE = 5;
-    const RATE_LIMIT_DELAY = 2000;
+    // Optimized settings for 100 req/s Tron API limit
+    // Target: ~75 req/s with 25% safety margin
+    const CHUNK_SIZE = 25;
+    const RATE_LIMIT_DELAY = 300;
 
     for (let i = 0; i < accounts.length; i += CHUNK_SIZE) {
       if (this.isWaiting) {
