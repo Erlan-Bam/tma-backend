@@ -16,7 +16,8 @@ export class MaintenanceMiddleware implements NestMiddleware {
 
   use(req: Request, res: Response, next: NextFunction) {
     // Skip maintenance check for health endpoint and admin endpoints
-    const path = req.path || req.url;
+    // Use originalUrl to get the full path including any global prefixes
+    const path = req.originalUrl || req.url || req.path;
 
     this.logger.debug(
       `Maintenance check - Path: ${path}, URL: ${req.url}, Original URL: ${req.originalUrl}`,
