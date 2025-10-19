@@ -9,8 +9,8 @@ import { CommissionName, TransactionStatus } from '@prisma/client';
 import { CardService } from 'src/card/card.service';
 import { GetStatsDto } from './dto/get-stats.dto';
 import { MaintenanceService } from 'src/shared/services/maintenance.service';
-import { PaginationDto } from 'src/shared/dto/pagination.dto';
 import { GetUserTransactionsDto } from './dto/get-user-transactions.dto';
+import { TopupUserAccountDto } from './dto/topup-user-account.dto';
 
 @Injectable()
 export class AdminService {
@@ -635,6 +635,95 @@ export class AdminService {
         throw error;
       }
       this.logger.error(`Error when removing failed job, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async topupUserAccount(data: TopupUserAccountDto) {
+    try {
+      // Step 1: Create topup application
+      this.logger.log(
+        `Starting topup process for childUserId=${data.childUserId}, amount=${data.amount}`,
+      );
+
+      const createResult = await this.zephyr.topupWallet(
+        data.childUserId,
+        data.amount,
+      );
+
+      if (createResult.status !== 'success') {
+        throw new HttpException(
+          createResult.message || 'Failed to create topup application',
+          400,
+        );
+      }
+
+      this.logger.log(
+        `Topup application created successfully for childUserId=${data.childUserId}`,
+      );
+
+      const { applications } = await this.zephyr.getTopupApplications(
+        data.childUserId,
+        { page: 1, limit: 5, status: 0 },
+      );
+
+      if (!applications || applications.length === 0) {
+        throw new HttpException('Failed to retrieve topup applications', 500);
+      }
+
+      const latestApplication = applications.find(
+        (app) => app.amount === data.amount,
+      );
+
+      if (!latestApplication) {
+        throw new HttpException(
+          'Failed to find the created topup application',
+          500,
+        );
+      }
+
+      this.logger.log(
+        `Found topup application with id=${latestApplication.id}`,
+      );
+
+      // Step 3: Approve the application
+      const approveResult = await this.zephyr.acceptTopupApplication(
+        latestApplication.id,
+      );
+
+      if (approveResult.status !== 'success') {
+        throw new HttpException(
+          approveResult.message || 'Failed to approve topup application',
+          400,
+        );
+      }
+
+      this.logger.log(
+        `Topup application approved successfully for childUserId=${data.childUserId}, applicationId=${latestApplication.id}`,
+      );
+
+      // Step 4: Get updated balance
+      const balanceResult = await this.zephyr.getAccountBalance(
+        data.childUserId,
+      );
+
+      return {
+        status: 'success',
+        message: 'User account topped up successfully',
+        data: {
+          childUserId: data.childUserId,
+          amount: data.amount,
+          applicationId: latestApplication.id,
+          newBalance: balanceResult.balance,
+        },
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        `Error when topping up user account for childUserId=${data.childUserId}, error: ${error}`,
+      );
       throw new HttpException('Something Went Wrong', 500);
     }
   }

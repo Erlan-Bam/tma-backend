@@ -30,6 +30,6 @@ export class CreateCardDto {
   })
   @IsNotEmpty()
   @IsInt()
-  @Min(22)
+  @Min(21)
   topupAmount: number;
 }

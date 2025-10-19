@@ -18,6 +18,7 @@ import { UpdateCommissionDto } from './dto/update-commision.dto';
 import { GetStatsDto } from './dto/get-stats.dto';
 import { PaginationDto } from 'src/shared/dto/pagination.dto';
 import { GetUserTransactionsDto } from './dto/get-user-transactions.dto';
+import { TopupUserAccountDto } from './dto/topup-user-account.dto';
 
 @Controller('admin')
 @ApiBearerAuth('JWT')
@@ -163,5 +164,10 @@ export class AdminController {
   @Delete('queue/failed/:jobId')
   async removeFailedJob(@Param('jobId') jobId: string) {
     return await this.adminService.removeFailedJob(jobId);
+  }
+
+  @Post('user/topup')
+  async topupUserAccount(@Body() data: TopupUserAccountDto) {
+    return await this.adminService.topupUserAccount(data);
   }
 }

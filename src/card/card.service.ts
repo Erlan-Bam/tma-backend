@@ -191,7 +191,7 @@ export class CardService {
 
       if (processedAmount <= 0) {
         throw new HttpException(
-          `Amount must be greater than card fee (${cardFee.rate} USDT)`,
+          `Amount must be greater than card fee (${cardFee.rate} ${cardFee.type === 'FIXED' ? 'USDT' : '%'})`,
           400,
         );
       }
