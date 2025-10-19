@@ -16,7 +16,7 @@ export class TransactionCronService {
     @InjectQueue('transaction-queue') private queue: Queue,
   ) {}
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_MINUTE)
   async handleWalletMonitoring() {
     if (this.isRunning) {
       this.logger.warn(
@@ -57,7 +57,7 @@ export class TransactionCronService {
             batchIndex: batchIndex,
             batchSize: this.BATCH_SIZE,
             offset: batchIndex * this.BATCH_SIZE,
-            checkedAt: time.toISOString(),
+            time: time.toISOString(),
           },
           {
             delay,
