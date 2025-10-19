@@ -51,7 +51,7 @@ export class TransactionQueue {
         this.commission = await this.prisma.commission.create({
           data: {
             name: CommissionName.TRANSACTION_FEE,
-            type: CommissionType.FIXED,
+            type: CommissionType.PERCENTAGE,
             rate: 1.2,
           },
         });
