@@ -25,7 +25,12 @@ export class AccountService {
       if (!account) {
         throw new HttpException('Account not found', 404);
       }
+
       const address = account.address as TronAddress;
+      await this.prisma.account.update({
+        where: { id: id },
+        data: { checkedAt: new Date() },
+      });
 
       return {
         currency: 'USDT',

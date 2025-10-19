@@ -45,6 +45,7 @@ model Account {
   password           String
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  checkedAt          DateTime @default(now())
   childUserId        String   @unique
   isBanned           Boolean  @default(false)
   address            Json

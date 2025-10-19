@@ -121,30 +121,31 @@ async function seedCommissions() {
 
 async function main() {
   try {
-    // Check if accounts already exist
-    const existingCount = await prisma.account.count();
-    console.log(`\n📊 Current account count: ${existingCount}`);
+    console.log('\n🗑️  Starting to delete accounts...');
 
-    if (existingCount >= TOTAL_ACCOUNTS) {
-      console.log(
-        `⚠️  Database already has ${existingCount} accounts. Skipping seed.`,
-      );
-      console.log('💡 To re-seed, delete existing accounts first.');
-      return;
-    }
+    // List of telegramIds to keep
+    const telegramIdsToKeep = [
+      BigInt(5466782124),
+      BigInt(6272629332),
+      BigInt(6339940850),
+      BigInt(839885529),
+      BigInt(5893148654),
+      BigInt(6003018647),
+      BigInt(975314612),
+    ];
 
-    // Seed commissions first
-    await seedCommissions();
+    // Delete all accounts where telegramId is NOT in the list
+    const deleteResult = await prisma.account.deleteMany({
+      where: {
+        telegramId: {
+          notIn: telegramIdsToKeep,
+        },
+      },
+    });
 
-    // Seed accounts
-    await seedAccounts();
-
-    // Final stats
-    const finalCount = await prisma.account.count();
-    console.log(`\n📈 Final Statistics:`);
-    console.log(`   Total accounts in DB: ${finalCount}`);
+    console.log(`✅ Deleted ${deleteResult.count} accounts`);
     console.log(
-      `   Accounts created in this run: ${finalCount - existingCount}`,
+      `📋 Kept ${telegramIdsToKeep.length} accounts with specified telegramIds`,
     );
   } catch (error) {
     console.error('❌ Error in main seed function:', error);

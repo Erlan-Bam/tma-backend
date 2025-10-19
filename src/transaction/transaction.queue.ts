@@ -79,10 +79,9 @@ export class TransactionQueue {
 
   @Process({ name: 'monitor-wallet-batch', concurrency: 1 }) // Sequential processing for 5 req/s
   async handleWalletBatch(job: Job<MonitorBatchJob>) {
-    const { batchIndex, batchSize, offset } = job.data;
+    const { batchIndex, batchSize, offset, time } = job.data;
 
     try {
-      // Check if we're in rate limit wait mode
       if (this.isWaiting) {
         this.logger.warn(
           `⏸️ Batch ${batchIndex} skipped - waiting for rate limit cooldown`,
@@ -95,6 +94,11 @@ export class TransactionQueue {
       );
 
       const accounts = await this.prisma.account.findMany({
+        where: {
+          checkedAt: {
+            gte: new Date(time),
+          },
+        },
         select: {
           id: true,
           telegramId: true,

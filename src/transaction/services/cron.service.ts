@@ -7,7 +7,7 @@ import { InjectQueue } from '@nestjs/bull';
 @Injectable()
 export class TransactionCronService {
   private readonly logger = new Logger(TransactionCronService.name);
-  private readonly BATCH_SIZE = 1;
+  private readonly BATCH_SIZE = 5;
   private readonly BATCH_DELAY_MS = 1100;
   private isRunning = false;
 
@@ -27,9 +27,24 @@ export class TransactionCronService {
 
     this.isRunning = true;
     try {
-      const wallets = await this.prisma.account.count();
+      const time = new Date(Date.now() - 10 * 60 * 1000);
 
-      this.logger.log(`📊 Scheduling monitoring for ${wallets} wallets`);
+      const wallets = await this.prisma.account.count({
+        where: {
+          checkedAt: {
+            gte: time,
+          },
+        },
+      });
+
+      this.logger.log(
+        `📊 Scheduling monitoring for ${wallets} active wallets (logged in within last 10 minutes)`,
+      );
+
+      if (wallets === 0) {
+        this.logger.log('✅ No active wallets to monitor at this time');
+        return;
+      }
 
       const totalBatches = Math.ceil(wallets / this.BATCH_SIZE);
 
@@ -42,6 +57,7 @@ export class TransactionCronService {
             batchIndex: batchIndex,
             batchSize: this.BATCH_SIZE,
             offset: batchIndex * this.BATCH_SIZE,
+            checkedAt: time.toISOString(),
           },
           {
             delay,

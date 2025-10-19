@@ -4,6 +4,7 @@ export type MonitorBatchJob = {
   batchIndex: number;
   batchSize: number;
   offset: number;
+  time: string;
 };
 
 export type SuccessfulTransactionJob = {
