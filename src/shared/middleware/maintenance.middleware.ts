@@ -17,17 +17,12 @@ export class MaintenanceMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     const path = req.originalUrl || req.url || req.path;
 
-    this.logger.debug(
-      `Maintenance check - Path: ${path}, URL: ${req.url}, Original URL: ${req.originalUrl}`,
-    );
-
     if (path.includes('/health') || path.includes('/admin')) {
       this.logger.debug(`Skipping maintenance check for: ${path}`);
       return next();
     }
 
     const isInMaintenance = this.maintenanceService.getMaintenanceStatus();
-    this.logger.debug(`Maintenance status: ${isInMaintenance}`);
 
     if (isInMaintenance) {
       throw new HttpException(
