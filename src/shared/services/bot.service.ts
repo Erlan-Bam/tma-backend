@@ -43,7 +43,7 @@ We're working hard to improve our services and will be back online shortly.
 Thank you for your patience! 🙏
 
 For urgent matters, contact support:
-💬 @arctic_pay_support
+💬 @arcticpay_support_bot
       `.trim();
 
       await ctx.reply(maintenanceMessage, {
@@ -92,7 +92,7 @@ Welcome to Arctic Pay, a new way to manage your finances! 💎
       const keyboard = new InlineKeyboard()
         .webApp('🏦 Open Arctic Pay Wallet', appUrl)
         .row()
-        .url('📞 Support', 'https://t.me/arctic_pay_support')
+        .url('📞 Support', 'https://t.me/arcticpay_support_bot')
         .url('📖 Help Center', 'https://arcticpay.io/help');
 
       await ctx.reply(welcomeMessage, {
@@ -140,7 +140,7 @@ Welcome to Arctic Pay, a new way to manage your finances! 💎
 Our support team is here to assist you 24/7!
 
 📞 Contact Options:
-• Support Chat: @arctic_pay_support
+• Support Chat: @arcticpay_support_bot
 • Email: support@arcticpay.io  
 • Help Center: arcticpay.io/help
 
@@ -152,7 +152,7 @@ Arctic Pay staff will never ask for your passwords or private keys in DMs.
       `.trim();
 
       const supportKeyboard = new InlineKeyboard()
-        .url('💬 Chat with Support', 'https://t.me/arctic_pay_support')
+        .url('💬 Chat with Support', 'https://t.me/arcticpay_support_bot')
         .row()
         .url('📖 Help Center', 'https://arcticpay.io/help')
         .url('📧 Email Support', 'mailto:support@arcticpay.io');
@@ -298,7 +298,7 @@ We encountered an issue processing your payment.
 ${errorReason ? `*Reason:* ${errorReason}\n` : ''}
 Please contact our support team if you need assistance.
 
-💬 Support: @arctic_pay_support
+💬 Support: @arcticpay_support_bot
       `.trim();
 
       await this.bot.api.sendMessage(telegramId.toString(), failureMessage, {
