@@ -1,6 +1,7 @@
 import { HttpException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
+import { BotService } from 'src/shared/services/bot.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { TopupCardDto } from './dto/topup-card.dto';
 import { CommissionName, Commission, CommissionType } from '@prisma/client';
@@ -13,6 +14,7 @@ export class CardService {
   constructor(
     private prisma: PrismaService,
     private zephyr: ZephyrService,
+    private bot: BotService,
   ) {
     this.loadCardFee();
   }
@@ -165,7 +167,7 @@ export class CardService {
     try {
       const account = await this.prisma.account.findUnique({
         where: { id: id },
-        select: { childUserId: true, referrer: true },
+        select: { childUserId: true, referrer: true, telegramId: true },
       });
 
       if (!account) {
@@ -208,6 +210,32 @@ export class CardService {
         throw new HttpException(
           response.message || 'Card creation failed',
           400,
+        );
+      }
+
+      try {
+        const cardMessage = `
+💳 *Card Created Successfully!*
+
+Your virtual card has been created and is ready to use.
+
+✅ *Status:* Active
+
+You can now use your card for online payments worldwide! 🌍
+
+🔒 Keep your card details secure and never share them with anyone.
+        `.trim();
+
+        await this.bot.sendMessage(account.telegramId.toString(), cardMessage, {
+          parse_mode: 'Markdown',
+        });
+
+        this.logger.log(
+          `📨 Card creation notification sent to user ${account.telegramId}`,
+        );
+      } catch (botError) {
+        this.logger.error(
+          `Failed to send card creation notification to user ${account.telegramId}: ${botError}`,
         );
       }
 
