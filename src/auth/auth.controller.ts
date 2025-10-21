@@ -2,6 +2,7 @@ import { Body, Controller, Logger, Post } from '@nestjs/common';
 import { TmaDto } from './dto/tma-auth.dto';
 import { ApiTags, ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import { AdminLoginDto } from './dto/admin-login.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -21,5 +22,10 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Email already exists' })
   async tma(@Body() data: TmaDto) {
     return await this.authService.tma(data);
+  }
+
+  @Post('admin/login')
+  async adminLogin(@Body() data: AdminLoginDto) {
+    return await this.authService.adminLogin(data);
   }
 }

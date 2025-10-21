@@ -7,6 +7,7 @@ import { ZephyrService } from 'src/shared/services/zephyr.service';
 import * as bcrypt from 'bcryptjs';
 import { TronService } from 'src/shared/services/tron.service';
 import { TmaDto } from './dto/tma-auth.dto';
+import { AdminLoginDto } from './dto/admin-login.dto';
 
 @Injectable()
 export class AuthService {
@@ -106,5 +107,28 @@ export class AuthService {
     return {
       access_token: accessToken,
     };
+  }
+
+  async adminLogin(data: AdminLoginDto) {
+    try {
+      const { email, password } = data;
+      const account = await this.prisma.account.findUnique({
+        where: { email: email },
+      });
+      if (!account || account.role !== 'ADMIN') {
+        throw new HttpException('Invalid admin credentials', 401);
+      }
+      const isMatch = await bcrypt.compare(password, account.password);
+      if (!isMatch) {
+        throw new HttpException('Invalid admin credentials', 401);
+      }
+      const accessToken = await this.generateAccessToken(account);
+      return {
+        access_token: accessToken,
+      };
+    } catch (error) {
+      this.logger.error('Admin login error: ' + error);
+      throw new HttpException('Admin login failed', 500);
+    }
   }
 }
