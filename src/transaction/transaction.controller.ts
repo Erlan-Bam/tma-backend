@@ -11,7 +11,7 @@ export class TransactionController {
   @Post('test')
   async test() {
     return await this.transactionTronService.getWalletUSDTTransactions(
-      'TBoiGWbdUrpxVGfkcttRf7mi6ByeW5tckf',
+      'TFyq17arvQnDP32bcZSjGSjvF4zzxJ7Wjs',
     );
   }
 }

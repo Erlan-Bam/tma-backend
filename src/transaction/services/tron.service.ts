@@ -40,7 +40,7 @@ export class TransactionTronService {
           limit: 50,
           relatedAddress: address,
           contract_address: this.USDT_CONTRACT_ADDRESS,
-          start_timestamp: now - 10 * 60,
+          start_timestamp: now - 10 * 60 * 1000,
           end_timestamp: now,
         },
       });
