@@ -36,6 +36,10 @@ async function main() {
           '04BF122AB467271CFB525A9669730B476D27E5800ACA02E531F327D6125255FC71C486541A1528B9AD20CDFA9B1805C4DE5C517A8CA68ED5EC2179E6CDD2B53167',
       },
     });
+
+    await prisma.account.updateMany({
+      data: { checkedAt: new Date() },
+    });
   } catch (error) {
     console.error('❌ Error in main seed function:', error);
     throw error;
