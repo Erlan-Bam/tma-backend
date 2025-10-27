@@ -77,17 +77,32 @@ export class AuthService {
           }
         }
 
-        account = await this.prisma.account.create({
-          data: {
-            telegramId: telegramId,
-            email: email,
-            password: hashedPassword,
-            childUserId: childAccount.childUserId,
-            address: wallet.address,
-            privateKey: wallet.privateKey,
-            publicKey: wallet.publicKey,
-            referredBy: referrerId,
-          },
+        await this.prisma.$transaction(async (tx) => {
+          account = await tx.account.create({
+            data: {
+              telegramId: telegramId,
+              email: email,
+              password: hashedPassword,
+              childUserId: childAccount.childUserId,
+              address: wallet.address,
+              privateKey: wallet.privateKey,
+              publicKey: wallet.publicKey,
+              referredBy: referrerId,
+            },
+          });
+
+          const response = await this.zephyrService.updateAccount({
+            topupMin: 10,
+            topupMax: 10000,
+            nickname: email,
+            userId: childAccount.childUserId,
+          });
+          if (response.status !== 'success') {
+            this.logger.warn(
+              `Failed to update Zephyr account settings for telegramId=${telegramId}: ${JSON.stringify(response)}`,
+            );
+            throw new HttpException('Failed to update Zephyr account', 500);
+          }
         });
       } catch (error) {
         this.logger.error(

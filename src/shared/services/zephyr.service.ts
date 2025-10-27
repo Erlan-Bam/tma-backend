@@ -816,4 +816,46 @@ export class ZephyrService {
       throw error;
     }
   }
+
+  async updateAccount({
+    nickname,
+    topupMin,
+    topupMax,
+    userId,
+  }: {
+    userId: string;
+    topupMin: number;
+    topupMax: number;
+    nickname?: string;
+  }) {
+    try {
+      const response = await this.sendRequest({
+        method: 'PUT',
+        endpoint: `/open-api/user/child`,
+        body: {
+          nickname,
+          topupMin,
+          topupMax,
+          userId,
+        },
+      });
+
+      if (response.code === 200) {
+        return {
+          status: 'success',
+          message: 'User account updated successfully',
+        };
+      } else {
+        this.logger.debug(
+          `Updating user account resulted in operation not successful, response: ${JSON.stringify(response)}`,
+        );
+        return { status: 'error', message: response.msg };
+      }
+    } catch (error) {
+      this.logger.error(
+        'Error from zephyr when updating user account: ' + error,
+      );
+      throw error;
+    }
+  }
 }

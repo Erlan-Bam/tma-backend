@@ -261,7 +261,7 @@ export class TransactionQueue {
     } catch (error) {
       this.logger.error(
         `❌ Error processing successful transaction for account ${accountId}:`,
-        error?.message || error,
+        error,
       );
 
       try {
