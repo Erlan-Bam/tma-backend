@@ -46,7 +46,7 @@ export class AdminService {
 
   async getAllAccounts() {
     try {
-      const accounts = await this.prisma.account.findMany({});
+      const accounts = await this.prisma.account.findMany();
 
       return accounts;
     } catch (error) {
