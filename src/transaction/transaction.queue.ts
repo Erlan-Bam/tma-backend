@@ -264,17 +264,24 @@ export class TransactionQueue {
         error,
       );
 
-      try {
-        await this.bot.sendUnsuccessfulTransactionMessage(
-          account.telegramId,
-          amount,
-          tronId,
-          'Transaction processing failed',
-        );
-      } catch (notificationError) {
-        this.logger.error(
-          `❌ Error sending failure notification to user ${account.telegramId} for transaction ${tronId}`,
-          notificationError?.message || notificationError,
+      const isFinalAttempt = job.attemptsMade >= job.opts.attempts;
+      if (isFinalAttempt) {
+        try {
+          await this.bot.sendUnsuccessfulTransactionMessage(
+            account.telegramId,
+            amount,
+            tronId,
+            'Transaction processing failed',
+          );
+        } catch (notificationError) {
+          this.logger.error(
+            `❌ Error sending failure notification to user ${account.telegramId} for transaction ${tronId}`,
+            notificationError?.message || notificationError,
+          );
+        }
+      } else {
+        this.logger.warn(
+          `⚠️ Transaction failed (attempt ${job.attemptsMade}/${job.opts.attempts}) - will retry`,
         );
       }
 
