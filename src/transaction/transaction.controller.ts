@@ -8,10 +8,10 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 export class TransactionController {
   constructor(private transactionTronService: TransactionTronService) {}
 
-  // @Post('test')
-  // async test() {
-  //   return await this.transactionTronService.getWalletUSDTTransactions(
-  //     'TBoiGWbdUrpxVGfkcttRf7mi6ByeW5tckf',
-  //   );
-  // }
+  @Post('test')
+  async test() {
+    return await this.transactionTronService.getWalletUSDTTransactions(
+      'TBoiGWbdUrpxVGfkcttRf7mi6ByeW5tckf',
+    );
+  }
 }
