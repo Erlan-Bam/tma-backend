@@ -15,6 +15,7 @@ import { TronAddress } from './types/tron.types';
 import { ZephyrService } from 'src/shared/services/zephyr.service';
 import { BotService } from 'src/shared/services/bot.service';
 import { AccountService } from 'src/account/account.service';
+import { timestamp } from 'rxjs';
 
 @Processor('transaction-queue')
 export class TransactionQueue {
@@ -378,10 +379,16 @@ export class TransactionQueue {
             await this.queue.add(
               'successful-transaction',
               {
-                account: account,
+                account: {
+                  id: account.id,
+                  telegramId: Number(account.telegramId),
+                  childUserId: account.childUserId,
+                  referredBy: account.referredBy,
+                },
                 amount: netAmount,
                 tronId: tx.tronId,
                 originalAmount: tx.amount,
+                timestamp: new Date(),
               },
               {
                 attempts: 5,
