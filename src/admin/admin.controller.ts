@@ -37,8 +37,8 @@ export class AdminController {
   }
 
   @Get('accounts')
-  async getAllAccounts() {
-    return await this.adminService.getAllAccounts();
+  async getAllAccounts(@Query() query: PaginationDto) {
+    return await this.adminService.getAllAccounts(query);
   }
 
   @Get('user/:childUserId/cards')

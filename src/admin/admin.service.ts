@@ -11,6 +11,7 @@ import { GetStatsDto } from './dto/get-stats.dto';
 import { MaintenanceService } from 'src/shared/services/maintenance.service';
 import { GetUserTransactionsDto } from './dto/get-user-transactions.dto';
 import { TopupUserAccountDto } from './dto/topup-user-account.dto';
+import { PaginationDto } from 'src/shared/dto/pagination.dto';
 
 @Injectable()
 export class AdminService {
@@ -44,11 +45,17 @@ export class AdminService {
     }
   }
 
-  async getAllAccounts() {
+  async getAllAccounts(query: PaginationDto) {
     try {
-      const accounts = await this.prisma.account.findMany();
+      const accounts = await this.prisma.account.findMany({
+        skip: (query.page - 1) * query.limit,
+        take: query.limit,
+      });
 
-      return accounts;
+      return accounts.map((account) => ({
+        ...account,
+        telegramId: account.telegramId.toString(),
+      }));
     } catch (error) {
       this.logger.error(`Error when getting all accounts, error: ${error}`);
       throw new HttpException('Something Went Wrong', 500);
