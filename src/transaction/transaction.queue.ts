@@ -399,7 +399,7 @@ export class TransactionQueue {
         } catch (error) {
           this.logger.error(
             `Error checking/queuing transaction ${tx.tronId}:`,
-            error?.message,
+            error,
           );
         }
       }
