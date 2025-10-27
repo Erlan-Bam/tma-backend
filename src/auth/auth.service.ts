@@ -93,7 +93,7 @@ export class AuthService {
 
           const response = await this.zephyrService.updateAccount({
             topupMin: 10,
-            topupMax: 10000,
+            topupMax: 20000,
             nickname: email,
             userId: childAccount.childUserId,
           });
