@@ -173,9 +173,12 @@ export class TransactionQueue {
           );
 
           for (const app of applications) {
-            if (app.amount === amount) {
+            const difference = Math.abs(app.amount - amount);
+            const tolerance = 0.01;
+
+            if (difference < tolerance) {
               this.logger.debug(
-                `Matched application ${app.id} with amount ${app.amount}`,
+                `Matched application ${app.id} with amount ${app.amount} (difference: ${difference.toFixed(4)} USDT)`,
               );
               try {
                 const transaction = await tx.transaction.upsert({
