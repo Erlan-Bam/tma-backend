@@ -34,7 +34,7 @@ export class TransactionTronService {
   async getWalletUSDTTransactions(address: string) {
     try {
       const now = Date.now();
-      const start = now - 22.5 * 60 * 60 * 1000;
+      const start = now - 48 * 60 * 60 * 1000;
       const response = await this.tron.get('/api/token_trc20/transfers', {
         params: {
           start: 0,
