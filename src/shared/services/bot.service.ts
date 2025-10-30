@@ -317,50 +317,6 @@ Please contact our support team if you need assistance.
     }
   }
 
-  async sendCardCreationSuccessMessage(
-    telegramId: bigint | string,
-    cardInfo: {
-      cardType: 'VISA' | 'MASTER';
-      jurisdiction: 'HK' | 'UK' | 'US';
-      cardNumber: string; // полный номер карты
-    },
-  ) {
-    try {
-      // Маскируем номер карты, показываем только первые 4 и последние 4 цифры
-      const maskedCardNumber = cardInfo.cardNumber.replace(
-        /(\d{4})(\d{4})(\d{4})(\d{4})/,
-        '$1 **** **** $4',
-      );
-
-      const cardMessage = `
-💳 Your ${cardInfo.cardType} ${cardInfo.jurisdiction} ${maskedCardNumber}
-Card Created Successfully!
-
-Your virtual card has been created and is ready to use.
-
-✅ Status: Active
-
-You can now use your card for online payments worldwide! 🌍
-
-� Keep your card details secure and never share them with anyone.
-      `.trim();
-
-      await this.bot.api.sendMessage(telegramId.toString(), cardMessage, {
-        parse_mode: 'Markdown',
-      });
-
-      this.logger.log(
-        `📨 Card creation success message sent to user ${telegramId}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Failed to send card creation success message to user ${telegramId}`,
-        error as Error,
-      );
-      throw error;
-    }
-  }
-
   async onModuleDestroy() {
     this.bot.stop();
     this.logger.log('Telegram bot stopped');

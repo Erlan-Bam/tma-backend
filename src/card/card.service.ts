@@ -214,8 +214,15 @@ export class CardService {
       }
 
       try {
-        const cardMessage = `
-💳 *Card Created Successfully!*
+        const card = await this.zephyr.getCardInfo(
+          account.childUserId,
+          response.data.id,
+        );
+
+        if (card.status !== 'error') {
+          const cardMessage = `
+💳 *Your ${card.organize} ${card.organize.includes('Master') ? 'HK/UK' : 'US'} ${card.cardNo}*
+Card Created Successfully!
 
 Your virtual card has been created and is ready to use.
 
@@ -226,13 +233,18 @@ You can now use your card for online payments worldwide! 🌍
 🔒 Keep your card details secure and never share them with anyone.
         `.trim();
 
-        await this.bot.sendMessage(account.telegramId.toString(), cardMessage, {
-          parse_mode: 'Markdown',
-        });
+          await this.bot.sendMessage(
+            account.telegramId.toString(),
+            cardMessage,
+            {
+              parse_mode: 'Markdown',
+            },
+          );
 
-        this.logger.log(
-          `📨 Card creation notification sent to user ${account.telegramId}`,
-        );
+          this.logger.log(
+            `📨 Card creation notification sent to user ${account.telegramId}`,
+          );
+        }
       } catch (botError) {
         this.logger.error(
           `Failed to send card creation notification to user ${account.telegramId}: ${botError}`,
