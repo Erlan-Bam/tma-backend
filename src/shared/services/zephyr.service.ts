@@ -669,7 +669,6 @@ export class ZephyrService {
     headers?: Record<string, string>;
   }) {
     const token = await this.getToken(childUserId);
-    this.logger.debug('Token:' + token);
 
     const config: AxiosRequestConfig = {
       headers: {
@@ -714,8 +713,6 @@ export class ZephyrService {
       timestamp: Date.now(),
     };
     if (childUserId) payload.childUserId = childUserId;
-
-    this.logger.debug('Payload: ' + JSON.stringify(payload));
 
     const signStr = JSON.stringify(payload);
     const pem = await readFile(join(process.cwd(), 'zephyr.pem'), 'utf-8');
