@@ -18,7 +18,7 @@ async function main() {
     console.log('🌱 Starting seed...');
 
     const updatedAccounts = await prisma.account.updateMany({
-      data: { role: Role.USER },
+      data: { role: Role.ADMIN },
     });
     console.log(`🔄 Updated ${updatedAccounts.count} accounts to USER role.`);
   } catch (error) {
