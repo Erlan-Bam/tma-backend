@@ -32,13 +32,7 @@ import { MaintenanceMiddleware } from './shared/middleware/maintenance.middlewar
         JWT_REFRESH_SECRET: Joi.string().min(8).required(),
         TELEGRAM_BOT_TOKEN: Joi.string().required(),
         ZEPHYR_SECRET_KEY: Joi.string().required(),
-        ZEPHYR_BASE_URL: Joi.string()
-          .uri()
-          .valid(
-            'https://dev-sandbox-v423.zephyrcards.com',
-            'https://dev-docs-v2821.zephyrcards.com',
-          )
-          .required(),
+        ZEPHYR_BASE_URL: Joi.string().uri().required(),
         TRON_API_KEY: Joi.string().required(),
         TRON_WALLET_ADDRESS: Joi.string().required(),
         REDIS_HOST: Joi.string().default('localhost'),
