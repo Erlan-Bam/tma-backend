@@ -17,7 +17,7 @@ async function main() {
   try {
     console.log('🌱 Starting seed...');
 
-    await prisma.account.deleteMany({});
+    await prisma.account.updateMany({ data: { role: Role.USER } });
   } catch (error) {
     console.error('❌ Error in main seed function:', error);
     throw error;
