@@ -12,6 +12,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TransactionModule } from './transaction/transaction.module';
 import { BullModule } from '@nestjs/bull';
 import { MaintenanceMiddleware } from './shared/middleware/maintenance.middleware';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -64,6 +66,8 @@ import { MaintenanceMiddleware } from './shared/middleware/maintenance.middlewar
     HealthModule,
     TransactionModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -8,13 +8,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CardService } from './card.service';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from 'src/shared/decorator/user.decorator';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UserGuard } from 'src/shared/guards/user.guard';
 import { TopupCardDto } from './dto/topup-card.dto';
 
+@ApiTags('Card')
 @Controller('card')
 @ApiBearerAuth('JWT')
 @UseGuards(AuthGuard('jwt'), UserGuard)

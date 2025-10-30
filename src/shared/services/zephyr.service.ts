@@ -410,7 +410,40 @@ export class ZephyrService {
         endpoint: `/open-api/child/card/info/${cardId}`,
       });
 
-      console.log(response);
+      if (response.code === 200) {
+        const data = response.data;
+        return {
+          id: data.id,
+          cardNo: data.cardNo,
+          label: data.label,
+          balance: data.balance,
+          currency: data.currency,
+          status: data.status,
+          activateDate: data.activateDate,
+          minTopupAmount: data.minTopupAmount,
+          maxTopupAmount: data.maxTopupAmount,
+          usedScenes: data.usedScenes,
+          organize: data.organize,
+          cardArea: data.cardArea,
+        };
+      } else {
+        return {
+          status: 'error',
+          msg: response.msg,
+        };
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when getting card info: ' + error);
+      throw error;
+    }
+  }
+
+  async getWebhookCardInfo(cardId: string) {
+    try {
+      const response = await this.sendRequest({
+        method: 'GET',
+        endpoint: `/open-api/card/info/${cardId}`,
+      });
 
       if (response.code === 200) {
         const data = response.data;
@@ -427,6 +460,7 @@ export class ZephyrService {
           usedScenes: data.usedScenes,
           organize: data.organize,
           cardArea: data.cardArea,
+          userId: data.userId,
         };
       } else {
         return {
