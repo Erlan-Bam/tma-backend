@@ -70,11 +70,11 @@ For urgent matters, contact support:
 
       // Красивое приветственное сообщение
       const welcomeMessage = `
+Hello, ${firstName}! 
+
 🌟 Welcome to Arctic Pay! 🌟
 
 💳 Managing your money is now easy.
-
-We leverage the financial and technological expertise of our team in Dubai and Hong Kong to develop solutions that provide clarity in every transaction and help you earn more, consistently.
 
 ✨ What you can do:
 🔹 Create virtual cards instantly
@@ -84,7 +84,7 @@ We leverage the financial and technological expertise of our team in Dubai and H
 🔹 24/7 global acceptance
 
 🚀 Ready to get started?
-Tap the button below to open your Arctic Pay wallet!
+Tap the button below to open your Arctic Pay App!
 
 Welcome to Arctic Pay, a new way to manage your finances! 💎
       `.trim();
@@ -93,7 +93,7 @@ Welcome to Arctic Pay, a new way to manage your finances! 💎
         .webApp('🏦 Open Arctic Pay Wallet', appUrl)
         .row()
         .url('📞 Support', 'https://t.me/arcticpay_support_bot')
-        .url('📖 Help Center', 'https://arcticpay.io/help');
+        .url('📖 FAQ', 'https://arcticpay.app/faq');
 
       await ctx.reply(welcomeMessage, {
         reply_markup: keyboard,
@@ -142,7 +142,7 @@ Our support team is here to assist you 24/7!
 📞 Contact Options:
 • Support Chat: @arcticpay_support_bot
 • Email: support@arcticpay.io  
-• Help Center: arcticpay.io/help
+• Help Center: https://arcticpay.app/faq
 
 ⏰ Response Time:
 We typically respond within 2-4 hours
@@ -154,7 +154,7 @@ Arctic Pay staff will never ask for your passwords or private keys in DMs.
       const supportKeyboard = new InlineKeyboard()
         .url('💬 Chat with Support', 'https://t.me/arcticpay_support_bot')
         .row()
-        .url('📖 Help Center', 'https://arcticpay.io/help')
+        .url('📖 FAQ', 'https://arcticpay.app/faq')
         .url('📧 Email Support', 'mailto:support@arcticpay.io');
 
       await ctx.reply(supportMessage, {
@@ -311,6 +311,52 @@ Please contact our support team if you need assistance.
     } catch (error) {
       this.logger.error(
         `Failed to send unsuccessful transaction message to user ${telegramId} for transaction ${tronId}`,
+        error as Error,
+      );
+      throw error;
+    }
+  }
+
+  async sendCardCreationSuccessMessage(
+    telegramId: bigint | string,
+    cardInfo: {
+      cardType: 'VISA' | 'MASTER';
+      jurisdiction: 'HK' | 'UK' | 'US';
+      cardNumber: string; // полный номер карты
+    },
+  ) {
+    try {
+      // Маскируем номер карты, показываем только первые 4 и последние 4 цифры
+      const maskedCardNumber = cardInfo.cardNumber.replace(
+        /(\d{4})(\d{4})(\d{4})(\d{4})/,
+        '$1 **** **** $4',
+      );
+
+      const cardMessage = `
+💳 Your ${cardInfo.cardType}/${cardInfo.jurisdiction} ${maskedCardNumber}
+Card Created Successfully!
+
+🎉 Congratulations! Your new virtual card is ready to use.
+
+✅ Your card details have been securely generated
+🔒 All information is encrypted and protected
+🌍 Ready for worldwide payments
+
+You can now start using your card for online purchases and payments globally!
+
+💎 Thank you for choosing Arctic Pay!
+      `.trim();
+
+      await this.bot.api.sendMessage(telegramId.toString(), cardMessage, {
+        parse_mode: 'Markdown',
+      });
+
+      this.logger.log(
+        `📨 Card creation success message sent to user ${telegramId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send card creation success message to user ${telegramId}`,
         error as Error,
       );
       throw error;
