@@ -17,7 +17,10 @@ async function main() {
   try {
     console.log('🌱 Starting seed...');
 
-    await prisma.account.updateMany({ data: { role: Role.USER } });
+    const updatedAccounts = await prisma.account.updateMany({
+      data: { role: Role.USER },
+    });
+    console.log(`🔄 Updated ${updatedAccounts.count} accounts to USER role.`);
   } catch (error) {
     console.error('❌ Error in main seed function:', error);
     throw error;
