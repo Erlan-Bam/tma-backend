@@ -333,18 +333,16 @@ Please contact our support team if you need assistance.
       );
 
       const cardMessage = `
-💳 Your ${cardInfo.cardType}/${cardInfo.jurisdiction} ${maskedCardNumber}
+💳 Your ${cardInfo.cardType} ${cardInfo.jurisdiction} ${maskedCardNumber}
 Card Created Successfully!
 
-🎉 Congratulations! Your new virtual card is ready to use.
+Your virtual card has been created and is ready to use.
 
-✅ Your card details have been securely generated
-🔒 All information is encrypted and protected
-🌍 Ready for worldwide payments
+✅ Status: Active
 
-You can now start using your card for online purchases and payments globally!
+You can now use your card for online payments worldwide! 🌍
 
-💎 Thank you for choosing Arctic Pay!
+� Keep your card details secure and never share them with anyone.
       `.trim();
 
       await this.bot.api.sendMessage(telegramId.toString(), cardMessage, {
