@@ -426,6 +426,7 @@ export class ZephyrService {
           maxTopupAmount: data.maxTopupAmount,
           usedScenes: data.usedScenes,
           organize: data.organize,
+          cardArea: data.cardArea,
         };
       } else {
         return {

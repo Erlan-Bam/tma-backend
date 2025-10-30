@@ -199,6 +199,9 @@ export class CardService {
       }
 
       createCardDto.topupAmount = processedAmount;
+      this.logger.log(
+        `💳 Creating card for userId=${id} with topupAmount=${createCardDto.topupAmount}`,
+      );
 
       const response = await this.zephyr.createCard(
         account.childUserId,
@@ -221,7 +224,7 @@ export class CardService {
 
         if (card.status !== 'error') {
           const cardMessage = `
-💳 *Your ${card.organize} ${card.organize.includes('Master') ? 'HK/UK' : 'US'} ${card.cardNo}*
+💳 *Your ${card.organize} ${card.cardArea} ${card.cardNo}*
 Card Created Successfully!
 
 Your virtual card has been created and is ready to use.
