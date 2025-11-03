@@ -16,6 +16,14 @@ const tronweb = new TronWeb({
 async function main() {
   try {
     console.log('🌱 Starting seed...');
+    const accounts = await prisma.account.findMany();
+
+    for (const account of accounts) {
+      const { telegramId, ...rest } = account;
+      console.log(
+        `telegramId: ${telegramId}, account: ${JSON.stringify({ ...rest })}`,
+      );
+    }
   } catch (error) {
     console.error('❌ Error in main seed function:', error);
     throw error;
