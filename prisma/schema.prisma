@@ -48,6 +48,7 @@ model Account {
   checkedAt          DateTime @default(now())
   childUserId        String   @unique
   isBanned           Boolean  @default(false)
+  isWalletValid      Boolean  @default(false)
   address            Json
   privateKey         String  @unique
   publicKey          String  @unique

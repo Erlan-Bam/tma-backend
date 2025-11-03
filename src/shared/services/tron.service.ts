@@ -136,4 +136,15 @@ export class TronService {
       throw new HttpException('Failed to get USDT balance', 500);
     }
   }
+
+  async getTRXBalance(address: string): Promise<number> {
+    try {
+      const balance = await this.tronweb.trx.getBalance(address);
+      // Convert from SUN to TRX (1 TRX = 1,000,000 SUN)
+      return balance / 1000000;
+    } catch (error) {
+      this.logger.error(`Error getting TRX balance for ${address}:`, error);
+      throw new Error(`Failed to get TRX balance: ${error.message}`);
+    }
+  }
 }

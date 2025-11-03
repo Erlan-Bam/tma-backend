@@ -5,23 +5,27 @@ import { GetTopupApplications } from './dto/get-topup-applications.dto';
 import { TronAddress } from 'src/transaction/types/tron.types';
 import { BotService } from 'src/shared/services/bot.service';
 import { ReferralBonus } from './types/add-referral-bonus.type';
+import { TronService } from 'src/shared/services/tron.service';
 
 @Injectable()
 export class AccountService {
   private readonly logger = new Logger(AccountService.name);
   private readonly REFERRAL_RATE = 0.2;
+  private readonly MINIMUM_TRX_BALANCE = 22;
   constructor(
     private zephyr: ZephyrService,
     private prisma: PrismaService,
     private bot: BotService,
+    private tron: TronService,
   ) {}
 
   async topupWallet(id: string) {
     try {
       const account = await this.prisma.account.findUnique({
         where: { id: id },
-        select: { address: true },
+        select: { address: true, isWalletValid: true },
       });
+
       if (!account) {
         throw new HttpException('Account not found', 404);
       }
@@ -32,9 +36,19 @@ export class AccountService {
         data: { checkedAt: new Date() },
       });
 
+      const balance = await this.tron.getTRXBalance(address.base58);
+      const isValid = balance >= this.MINIMUM_TRX_BALANCE;
+      await this.prisma.account.update({
+        where: { id: id },
+        data: { isWalletValid: isValid },
+      });
+
       return {
         currency: 'USDT',
         address: address.base58,
+        balance: balance,
+        isValid: isValid,
+        minTrx: this.MINIMUM_TRX_BALANCE,
       };
     } catch (error) {
       if (error instanceof HttpException) throw error;
