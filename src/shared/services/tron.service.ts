@@ -143,7 +143,7 @@ export class TronService {
       // Convert from SUN to TRX (1 TRX = 1,000,000 SUN)
       return balance / 1000000;
     } catch (error) {
-      this.logger.error(`Error getting TRX balance for ${address}:`, error);
+      this.logger.error(`Error getting TRX balance for ${address}: ${error}`);
       throw new Error(`Failed to get TRX balance: ${error.message}`);
     }
   }
