@@ -16,14 +16,28 @@ const tronweb = new TronWeb({
 async function main() {
   try {
     console.log('🌱 Starting seed...');
-    const accounts = await prisma.account.findMany();
+    const account = await prisma.account.update({
+      where: {
+        telegramId: 6003018647,
+      },
+      data: {
+        address: {
+          hex: '41142485B6F908FA0CB4BA4528582BFF001A8B0A40',
+          base58: 'TBoiGWbdUrpxVGfkcttRf7mi6ByeW5tckf',
+        },
+        privateKey:
+          '86AFE2E8478341114887868322B7AC2C8936FEC5D4F410E8725619F85D84BD23',
+        publicKey:
+          '04F5087E0BA35EFC31C5728F97F6B83BD83627CCA07EDC34200B66BF56B47106A68F9CCA0CC30BB92A90496D3BE5DE23686F7C2971330F3EABB573F4C59D48E7E6',
+      },
+    });
 
-    for (const account of accounts) {
-      const { telegramId, ...rest } = account;
-      console.log(
-        `telegramId: ${telegramId}, account: ${JSON.stringify({ ...rest })}`,
-      );
-    }
+    console.log(
+      '✅ Seed finished:',
+      (account.address as any).base58,
+      account.privateKey,
+      account.publicKey,
+    );
   } catch (error) {
     console.error('❌ Error in main seed function:', error);
     throw error;
