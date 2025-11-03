@@ -96,6 +96,7 @@ export class TransactionQueue {
 
       const accounts = await this.prisma.account.findMany({
         where: {
+          isWalletValid: true,
           checkedAt: {
             gte: new Date(time),
           },

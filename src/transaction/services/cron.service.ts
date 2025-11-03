@@ -31,6 +31,7 @@ export class TransactionCronService {
 
       const wallets = await this.prisma.account.count({
         where: {
+          isWalletValid: true,
           checkedAt: {
             gte: time,
           },
