@@ -10,11 +10,13 @@ export class TronService {
   private readonly logger = new Logger(TronService.name);
   private readonly tron: AxiosInstance;
   private readonly TRON_API_KEY: string;
+  private readonly TRON_WEB_API_KEY: string;
   private readonly MAIN_WALLET: string;
   private tronweb: TronWeb;
 
   constructor(private configService: ConfigService) {
     this.TRON_API_KEY = this.configService.getOrThrow('TRON_API_KEY');
+    this.TRON_WEB_API_KEY = this.configService.getOrThrow('TRON_WEB_API_KEY');
     this.MAIN_WALLET = this.configService.getOrThrow('TRON_WALLET_ADDRESS');
 
     this.tron = axios.create({
@@ -27,7 +29,7 @@ export class TronService {
     });
     this.tronweb = new TronWeb({
       fullHost: 'https://api.trongrid.io',
-      headers: { 'TRON-PRO-API-KEY': this.TRON_API_KEY },
+      headers: { 'TRON-PRO-API-KEY': this.TRON_WEB_API_KEY },
     });
   }
 

@@ -11,7 +11,6 @@ export class TransactionTronService {
   private readonly TRON_API_KEY: string;
   private readonly MAIN_WALLET: string;
   private readonly USDT_CONTRACT_ADDRESS = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
-  private tronweb: TronWeb;
 
   constructor(private configService: ConfigService) {
     this.TRON_API_KEY = this.configService.getOrThrow('TRON_API_KEY');
@@ -24,10 +23,6 @@ export class TransactionTronService {
         'Content-Type': 'application/json',
         'TRON-PRO-API-KEY': this.TRON_API_KEY,
       },
-    });
-    this.tronweb = new TronWeb({
-      fullHost: 'https://api.trongrid.io',
-      headers: { 'TRON-PRO-API-KEY': this.TRON_API_KEY },
     });
   }
 

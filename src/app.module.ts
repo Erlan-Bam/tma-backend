@@ -36,6 +36,7 @@ import { AppService } from './app.service';
         ZEPHYR_SECRET_KEY: Joi.string().required(),
         ZEPHYR_BASE_URL: Joi.string().uri().required(),
         TRON_API_KEY: Joi.string().required(),
+        TRON_WEB_API_KEY: Joi.string().required(),
         TRON_WALLET_ADDRESS: Joi.string().required(),
         REDIS_HOST: Joi.string().default('localhost'),
         REDIS_PORT: Joi.number().default(6379),
