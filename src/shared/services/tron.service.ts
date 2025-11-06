@@ -80,9 +80,13 @@ export class TronService {
     try {
       const { address, privateKey } = data;
 
-      this.tronweb.setPrivateKey(privateKey);
+      const tronweb = new TronWeb({
+        fullHost: 'https://api.trongrid.io',
+        headers: { 'TRON-PRO-API-KEY': this.TRON_WEB_API_KEY },
+        privateKey, // 🔥 задаём сразу здесь, не через setPrivateKey()
+      });
 
-      const derivedAddress = this.tronweb.address.fromPrivateKey(privateKey);
+      const derivedAddress = tronweb.address.fromPrivateKey(privateKey);
 
       if (derivedAddress !== address) {
         throw new Error(`Private key does not match address: ${address}`);
@@ -123,10 +127,8 @@ export class TronService {
     }
   }
 
-  async getTronBalance(address: string, privateKey: string) {
+  async getTronBalance(address: string) {
     try {
-      this.tronweb.setPrivateKey(privateKey);
-
       const contract = await this.tronweb
         .contract()
         .at(this.USDT_CONTRACT_ADDRESS);
@@ -134,7 +136,7 @@ export class TronService {
 
       return {
         success: true,
-        balance: balance / 1000000,
+        balance: balance / 1_000_000,
       };
     } catch (error) {
       this.logger.error('Error getting USDT balance:', error);

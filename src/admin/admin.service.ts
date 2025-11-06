@@ -281,7 +281,7 @@ export class AdminService {
       }
       const address = account.address as TronAddress;
 
-      return await this.tron.getTronBalance(address.base58, account.privateKey);
+      return await this.tron.getTronBalance(address.base58);
     } catch (error) {
       if (error instanceof HttpException) throw error;
       this.logger.error(
