@@ -82,6 +82,12 @@ export class TronService {
 
       this.tronweb.setPrivateKey(privateKey);
 
+      const derivedAddress = this.tronweb.address.fromPrivateKey(privateKey);
+
+      if (derivedAddress !== address) {
+        throw new Error(`Private key does not match address: ${address}`);
+      }
+
       const contract = await this.tronweb
         .contract()
         .at(this.USDT_CONTRACT_ADDRESS);
@@ -97,10 +103,7 @@ export class TronService {
 
       const transaction = await contract
         .transfer(this.MAIN_WALLET, balance)
-        .send({
-          from: address,
-          callValue: 0,
-        });
+        .send({ feeLimit: 10000000 });
 
       this.logger.log(
         `USDT transfer successful: ${transaction} - Amount: ${balance / 1000000} USDT`,
