@@ -142,6 +142,9 @@ export class AuthService {
         access_token: accessToken,
       };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       this.logger.error('Admin login error: ' + error);
       throw new HttpException('Admin login failed', 500);
     }
