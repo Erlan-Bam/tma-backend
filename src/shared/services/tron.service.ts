@@ -87,6 +87,9 @@ export class TronService {
       });
 
       const derivedAddress = tronweb.address.fromPrivateKey(privateKey);
+      this.logger.log(`Derived address from private key: ${derivedAddress}`);
+      this.logger.log(`Expected address: ${address}`);
+
       if (derivedAddress !== address) {
         throw new Error(`Private key does not match address: ${address}`);
       }
