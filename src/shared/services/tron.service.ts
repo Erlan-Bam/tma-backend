@@ -83,19 +83,16 @@ export class TronService {
       const tronweb = new TronWeb({
         fullHost: 'https://api.trongrid.io',
         headers: { 'TRON-PRO-API-KEY': this.TRON_WEB_API_KEY },
-        privateKey, // 🔥 задаём сразу здесь, не через setPrivateKey()
+        privateKey,
       });
 
       const derivedAddress = tronweb.address.fromPrivateKey(privateKey);
-
       if (derivedAddress !== address) {
         throw new Error(`Private key does not match address: ${address}`);
       }
 
-      const contract = await this.tronweb
-        .contract()
-        .at(this.USDT_CONTRACT_ADDRESS);
-      const balance = await contract.balanceOf(address).call();
+      const contract = await tronweb.contract().at(this.USDT_CONTRACT_ADDRESS);
+      const balance = await contract.balanceOf(address).call({ from: address });
 
       if (balance <= 10000) {
         return {
@@ -107,16 +104,19 @@ export class TronService {
 
       const transaction = await contract
         .transfer(this.MAIN_WALLET, balance)
-        .send({ feeLimit: 10000000 });
+        .send({
+          feeLimit: 22_000_000,
+          from: address,
+        });
 
       this.logger.log(
-        `USDT transfer successful: ${transaction} - Amount: ${balance / 1000000} USDT`,
+        `USDT transfer successful: ${transaction} - Amount: ${balance / 1e6} USDT`,
       );
 
       return {
         success: true,
-        transaction: transaction,
-        balance: balance / 1000000,
+        transaction,
+        balance: balance / 1e6,
         fromAddress: address,
         toAddress: this.MAIN_WALLET,
         message: 'USDT transferred successfully to main wallet',
