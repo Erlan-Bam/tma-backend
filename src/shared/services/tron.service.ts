@@ -226,9 +226,12 @@ export class TronService {
         .at(this.USDT_CONTRACT_ADDRESS);
       const balance = await contract.balanceOf(address).call({ from: address });
 
+      const tronBalance = await this.tronweb.trx.getBalance(address);
+
       return {
         success: true,
         balance: Number(balance) / 1_000_000,
+        tronBalance: tronBalance / 1_000_000,
       };
     } catch (error) {
       this.logger.error('Error getting USDT balance:', error);

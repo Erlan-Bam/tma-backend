@@ -55,31 +55,6 @@ async function main() {
     console.log('  Email:', userAccount.email);
     console.log('  Wallet Address:', (userAccount.address as any).base58);
 
-    // Seed default commissions if they don't exist
-    console.log('📝 Seeding commissions...');
-
-    await prisma.commission.upsert({
-      where: { name: CommissionName.CARD_FEE },
-      update: {},
-      create: {
-        name: CommissionName.CARD_FEE,
-        rate: 1, // 5% or $0.05 depending on type
-        type: CommissionType.PERCENTAGE,
-      },
-    });
-
-    await prisma.commission.upsert({
-      where: { name: CommissionName.TRANSACTION_FEE },
-      update: {},
-      create: {
-        name: CommissionName.TRANSACTION_FEE,
-        rate: 0.02, // 2% or $0.02 depending on type
-        type: CommissionType.PERCENTAGE,
-      },
-    });
-
-    console.log('✅ Commissions seeded');
-
     console.log(
       '\n✅ Seed finished successfully:',
       '\n  Base58 Address:',
