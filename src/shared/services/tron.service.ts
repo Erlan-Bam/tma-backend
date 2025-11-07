@@ -44,8 +44,6 @@ export class TronService {
       this.logger.log(
         `New local account: ${account.address.base58}, hex: ${account.address.hex}`,
       );
-      this.logger.log(`New local account private key: ${account.privateKey}`);
-      this.logger.log(`New local account public key: ${account.publicKey}`);
 
       const sun = this.tronweb.toSun(1);
       const tx = await this.tronweb.trx.sendTransaction(
@@ -105,14 +103,6 @@ export class TronService {
         privateKey,
       });
 
-      const derivedAddress = tronweb.address.fromPrivateKey(privateKey);
-      this.logger.log(`Derived address from private key: ${derivedAddress}`);
-      this.logger.log(`Expected address: ${address}`);
-
-      if (derivedAddress !== address) {
-        throw new Error(`Private key does not match address: ${address}`);
-      }
-
       const contract = await tronweb.contract().at(this.USDT_CONTRACT_ADDRESS);
       const balance = await contract.balanceOf(address).call({ from: address });
 
@@ -146,6 +136,50 @@ export class TronService {
     } catch (error) {
       this.logger.error('Error transferring USDT:', error);
       throw new Error(`Failed to transfer USDT: ${error.message}`);
+    }
+  }
+
+  async transferTRXToMainWallet(data: { address: string; privateKey: string }) {
+    try {
+      const { address, privateKey } = data;
+
+      const tronweb = new TronWeb({
+        fullHost: 'https://api.trongrid.io',
+        headers: { 'TRON-PRO-API-KEY': this.TRON_WEB_API_KEY },
+        privateKey,
+      });
+
+      const balance = await tronweb.trx.getBalance(address);
+      this.logger.log(`TRX balance: ${balance / 1e6} TRX`);
+
+      const MINIMUM_FEE_BUFFER = 0.3 * 1e6;
+      if (balance <= MINIMUM_FEE_BUFFER) {
+        return {
+          success: false,
+          message: 'Not enough TRX to transfer (need gas buffer)',
+          balance: balance / 1e6,
+        };
+      }
+
+      const amount = balance - MINIMUM_FEE_BUFFER;
+
+      const tx = await tronweb.trx.sendTransaction(this.MAIN_WALLET, amount);
+
+      this.logger.log(
+        `TRX transfer successful: ${tx.txid} - Amount: ${amount / 1e6} TRX`,
+      );
+
+      return {
+        success: true,
+        transaction: tx.txid,
+        balanceSent: amount / 1e6,
+        fromAddress: address,
+        toAddress: this.MAIN_WALLET,
+        message: 'TRX transferred successfully to main wallet',
+      };
+    } catch (error) {
+      this.logger.error('Error transferring TRX:', error);
+      throw new Error(`Failed to transfer TRX: ${error.message}`);
     }
   }
 

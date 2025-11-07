@@ -66,6 +66,11 @@ export class AdminController {
     return await this.adminService.transferUSDT(userId);
   }
 
+  @Post('transfer/trx/:userId')
+  async transferTRX(@Param('userId', ParseUUIDPipe) userId: string) {
+    return await this.adminService.transferTRX(userId);
+  }
+
   @Get('general/stats')
   async getGeneralStats(@Query() query: GetStatsDto) {
     return await this.adminService.getGeneralStats(query);
