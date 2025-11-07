@@ -183,6 +183,47 @@ export class TronService {
     }
   }
 
+  async transferTRXToSubWallet(data: { address: string; amount: number }) {
+    try {
+      const { address } = data;
+
+      const balance = await this.tronweb.trx.getBalance(address);
+      this.logger.log(`TRX balance: ${balance / 1e6} TRX`);
+
+      const MINIMUM_FEE_BUFFER = 0.3 * 1e6;
+      if (balance <= MINIMUM_FEE_BUFFER) {
+        return {
+          success: false,
+          message: 'Not enough TRX to transfer (need gas buffer)',
+          balance: balance / 1e6,
+        };
+      }
+
+      const amount = balance - MINIMUM_FEE_BUFFER;
+
+      const tx = await this.tronweb.trx.sendTransaction(
+        this.MAIN_WALLET,
+        amount,
+      );
+
+      this.logger.log(
+        `TRX transfer successful: ${tx.txid} - Amount: ${amount / 1e6} TRX`,
+      );
+
+      return {
+        success: true,
+        transaction: tx.txid,
+        balanceSent: amount / 1e6,
+        fromAddress: address,
+        toAddress: this.MAIN_WALLET,
+        message: 'TRX transferred successfully to main wallet',
+      };
+    } catch (error) {
+      this.logger.error('Error transferring TRX:', error);
+      throw new Error(`Failed to transfer TRX: ${error.message}`);
+    }
+  }
+
   async getTronBalance(address: string) {
     try {
       const contract = await this.tronweb

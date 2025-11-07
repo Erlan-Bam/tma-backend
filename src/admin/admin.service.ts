@@ -231,6 +231,34 @@ export class AdminService {
     }
   }
 
+  async transferTRXToSubWallet(userId: string, amount: number) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: userId },
+        select: { address: true },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      const address = account.address as TronAddress;
+
+      return await this.tron.transferTRXToSubWallet({
+        address: address.base58,
+        amount: amount,
+      });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        `Error when transferring TRX to sub-wallet for userId=${userId}, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
   async getGeneralStats(query: GetStatsDto) {
     try {
       const where: any = { status: TransactionStatus.SUCCESS };

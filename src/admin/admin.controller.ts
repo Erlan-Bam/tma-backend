@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from 'src/shared/guards/admin.guard';
 import { UpdateCommissionDto } from './dto/update-commision.dto';
@@ -19,8 +19,10 @@ import { GetStatsDto } from './dto/get-stats.dto';
 import { PaginationDto } from 'src/shared/dto/pagination.dto';
 import { GetUserTransactionsDto } from './dto/get-user-transactions.dto';
 import { TopupUserAccountDto } from './dto/topup-user-account.dto';
+import { TransferTrxToSubWalletDto } from './dto/transfer-trx-to-sub-wallet.dto';
 
 @Controller('admin')
+@ApiTags('Admin')
 @ApiBearerAuth('JWT')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
 export class AdminController {
@@ -69,6 +71,23 @@ export class AdminController {
   @Post('transfer/trx/:userId')
   async transferTRX(@Param('userId', ParseUUIDPipe) userId: string) {
     return await this.adminService.transferTRX(userId);
+  }
+
+  @Post('transfer-to/trx/:userId')
+  @ApiOperation({
+    summary: 'Transfer TRX to sub-wallet',
+    description: 'Transfers a specified amount of TRX from main wallet to a user\'s sub-wallet',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'The UUID of the user',
+    type: String,
+  })
+  async transferTRXToSubWallet(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() data: TransferTrxToSubWalletDto,
+  ) {
+    return await this.adminService.transferTRXToSubWallet(userId, data.amount);
   }
 
   @Get('general/stats')
