@@ -4,38 +4,89 @@ import {
   CommissionType,
   CommissionName,
 } from '@prisma/client';
-import { TronWeb } from 'tronweb';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcryptjs';
+import { ConfigService } from '@nestjs/config';
+import { TronService } from '../src/shared/services/tron.service';
 
 const prisma = new PrismaClient();
-const tronweb = new TronWeb({
-  fullHost: 'https://api.trongrid.io',
-});
+
+// Initialize ConfigService and TronService
+const configService = new ConfigService();
+const tronService = new TronService(configService);
 
 async function main() {
   try {
     console.log('🌱 Starting seed...');
-    const account = await prisma.account.update({
+
+    // Generate new Tron account using TronService
+    console.log('📝 Generating Tron account using TronService...');
+    const account = await tronService.createAccount();
+
+    console.log('✅ Tron account generated:');
+    console.log('  Address (base58):', account.address.base58);
+    console.log('  Address (hex):', account.address.hex);
+    console.log('  Private Key:', account.privateKey);
+    console.log('  Public Key:', account.publicKey);
+
+    const telegramId = BigInt(975314612);
+
+    console.log('📝 Updating user account in database...');
+
+    const userAccount = await prisma.account.update({
       where: {
-        telegramId: 6003018647,
+        telegramId: telegramId,
       },
       data: {
         address: {
-          hex: '41142485B6F908FA0CB4BA4528582BFF001A8B0A40',
-          base58: 'TBoiGWbdUrpxVGfkcttRf7mi6ByeW5tckf',
+          base58: account.address.base58,
+          hex: account.address.hex,
         },
-        privateKey:
-          '86AFE2E8478341114887868322B7AC2C8936FEC5D4F410E8725619F85D84BD23',
-        publicKey:
-          '04F5087E0BA35EFC31C5728F97F6B83BD83627CCA07EDC34200B66BF56B47106A68F9CCA0CC30BB92A90496D3BE5DE23686F7C2971330F3EABB573F4C59D48E7E6',
+        privateKey: account.privateKey,
+        publicKey: account.publicKey,
+        isWalletValid: true,
+        updatedAt: new Date(),
       },
     });
 
+    console.log('✅ User account created/updated:');
+    console.log('  ID:', userAccount.id);
+    console.log('  Telegram ID:', userAccount.telegramId.toString());
+    console.log('  Email:', userAccount.email);
+    console.log('  Wallet Address:', (userAccount.address as any).base58);
+
+    // Seed default commissions if they don't exist
+    console.log('📝 Seeding commissions...');
+
+    await prisma.commission.upsert({
+      where: { name: CommissionName.CARD_FEE },
+      update: {},
+      create: {
+        name: CommissionName.CARD_FEE,
+        rate: 0.05, // 5% or $0.05 depending on type
+        type: CommissionType.PERCENTAGE,
+      },
+    });
+
+    await prisma.commission.upsert({
+      where: { name: CommissionName.TRANSACTION_FEE },
+      update: {},
+      create: {
+        name: CommissionName.TRANSACTION_FEE,
+        rate: 0.02, // 2% or $0.02 depending on type
+        type: CommissionType.PERCENTAGE,
+      },
+    });
+
+    console.log('✅ Commissions seeded');
+
     console.log(
-      '✅ Seed finished:',
-      (account.address as any).base58,
+      '\n✅ Seed finished successfully:',
+      '\n  Base58 Address:',
+      account.address.base58,
+      '\n  Private Key:',
       account.privateKey,
+      '\n  Public Key:',
       account.publicKey,
     );
   } catch (error) {

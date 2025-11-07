@@ -41,7 +41,11 @@ export class TronService {
   async createAccount(): Promise<TronAccount> {
     try {
       const account: TronAccount = await this.tronweb.createAccount();
-      this.logger.log(`New local account: ${account.address.base58}`);
+      this.logger.log(
+        `New local account: ${account.address.base58}, hex: ${account.address.hex}`,
+      );
+      this.logger.log(`New local account private key: ${account.privateKey}`);
+      this.logger.log(`New local account public key: ${account.publicKey}`);
 
       const sun = this.tronweb.toSun(1);
       const tx = await this.tronweb.trx.sendTransaction(
@@ -51,11 +55,6 @@ export class TronService {
 
       this.logger.log(`Activation TX sent: ${tx.txid}`);
 
-      // 3. Wait for confirmation (optional)
-      // const receipt = await this.tronweb.trx.getTransactionInfo(tx.txid);
-      // this.logger.log(`Activation confirmed: ${JSON.stringify(receipt)}`);
-
-      // 4. Return ready-to-use wallet data
       return account;
     } catch (error) {
       this.logger.error('Error creating/activating Tron account:', error);
