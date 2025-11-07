@@ -45,7 +45,7 @@ export class TronService {
         `New local account: ${account.address.base58}, hex: ${account.address.hex}`,
       );
 
-      const sun = this.tronweb.toSun(1);
+      const sun = this.tronweb.toSun(0.1);
       const tx = await this.tronweb.trx.sendTransaction(
         account.address.base58,
         Number(sun),
