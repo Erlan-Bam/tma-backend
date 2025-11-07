@@ -29,7 +29,7 @@ async function main() {
     console.log('  Private Key:', account.privateKey);
     console.log('  Public Key:', account.publicKey);
 
-    const telegramId = BigInt(6003018647);
+    const telegramId = BigInt(6339940850);
 
     console.log('📝 Updating user account in database...');
 
