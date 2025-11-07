@@ -185,26 +185,12 @@ export class TronService {
 
   async transferTRXToSubWallet(data: { address: string; amount: number }) {
     try {
-      const { address } = data;
+      const { address, amount } = data;
 
-      const balance = await this.tronweb.trx.getBalance(address);
+      const balance = await this.tronweb.trx.getBalance(this.MAIN_WALLET);
       this.logger.log(`TRX balance: ${balance / 1e6} TRX`);
 
-      const MINIMUM_FEE_BUFFER = 0.3 * 1e6;
-      if (balance <= MINIMUM_FEE_BUFFER) {
-        return {
-          success: false,
-          message: 'Not enough TRX to transfer (need gas buffer)',
-          balance: balance / 1e6,
-        };
-      }
-
-      const amount = balance - MINIMUM_FEE_BUFFER;
-
-      const tx = await this.tronweb.trx.sendTransaction(
-        this.MAIN_WALLET,
-        amount,
-      );
+      const tx = await this.tronweb.trx.sendTransaction(address, amount);
 
       this.logger.log(
         `TRX transfer successful: ${tx.txid} - Amount: ${amount / 1e6} TRX`,
