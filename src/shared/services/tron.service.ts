@@ -190,7 +190,16 @@ export class TronService {
       const balance = await this.tronweb.trx.getBalance(this.MAIN_WALLET);
       this.logger.log(`TRX balance: ${balance / 1e6} TRX`);
 
-      const tx = await this.tronweb.trx.sendTransaction(address, amount);
+      const sun = this.tronweb.toSun(amount);
+      if (balance < Number(sun)) {
+        return {
+          success: false,
+          message: 'Not enough TRX in main wallet to transfer',
+          balance: balance / 1e6,
+        };
+      }
+
+      const tx = await this.tronweb.trx.sendTransaction(address, Number(sun));
 
       this.logger.log(
         `TRX transfer successful: ${tx.txid} - Amount: ${amount / 1e6} TRX`,
