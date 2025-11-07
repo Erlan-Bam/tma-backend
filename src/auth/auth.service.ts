@@ -47,16 +47,17 @@ export class AuthService {
     });
 
     if (!account) {
+      this.logger.debug(`Email: ${email} is new, creating account.`);
       if (!email || !password) {
         throw new HttpException('Missing required fields', 400);
       }
       try {
+        const wallet = await this.tronService.createAccount();
+
         const childAccount = await this.zephyrService.createChildAccount(
           email,
           hashedPassword,
         );
-
-        const wallet = await this.tronService.createAccount();
 
         let referrerId: string | null = null;
         if (data.referralCode) {
@@ -106,7 +107,8 @@ export class AuthService {
         });
       } catch (error) {
         this.logger.error(
-          `Error creating TMA account telegramId=${telegramId}: ` + error,
+          `Error creating TMA account telegramId=${telegramId}, email=${email}: ` +
+            error,
         );
         throw new HttpException('Failed to create account', 500);
       }

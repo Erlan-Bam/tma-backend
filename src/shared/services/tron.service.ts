@@ -12,12 +12,16 @@ export class TronService {
   private readonly TRON_API_KEY: string;
   private readonly TRON_WEB_API_KEY: string;
   private readonly MAIN_WALLET: string;
+  private readonly MAIN_WALLET_PRIVATE_KEY: string;
   private tronweb: TronWeb;
 
   constructor(private configService: ConfigService) {
     this.TRON_API_KEY = this.configService.getOrThrow('TRON_API_KEY');
     this.TRON_WEB_API_KEY = this.configService.getOrThrow('TRON_WEB_API_KEY');
     this.MAIN_WALLET = this.configService.getOrThrow('TRON_WALLET_ADDRESS');
+    this.MAIN_WALLET_PRIVATE_KEY = this.configService.getOrThrow(
+      'TRON_WALLET_PRIVATE_KEY',
+    );
 
     this.tron = axios.create({
       baseURL: 'https://apilist.tronscanapi.com',
@@ -30,16 +34,32 @@ export class TronService {
     this.tronweb = new TronWeb({
       fullHost: 'https://api.trongrid.io',
       headers: { 'TRON-PRO-API-KEY': this.TRON_WEB_API_KEY },
+      privateKey: this.MAIN_WALLET_PRIVATE_KEY,
     });
   }
 
-  async createAccount() {
+  async createAccount(): Promise<TronAccount> {
     try {
       const account: TronAccount = await this.tronweb.createAccount();
+      this.logger.log(`New local account: ${account.address.base58}`);
+
+      const sun = this.tronweb.toSun(1);
+      const tx = await this.tronweb.trx.sendTransaction(
+        account.address.base58,
+        Number(sun),
+      );
+
+      this.logger.log(`Activation TX sent: ${tx.txid}`);
+
+      // 3. Wait for confirmation (optional)
+      // const receipt = await this.tronweb.trx.getTransactionInfo(tx.txid);
+      // this.logger.log(`Activation confirmed: ${JSON.stringify(receipt)}`);
+
+      // 4. Return ready-to-use wallet data
       return account;
     } catch (error) {
-      this.logger.error('Error creating Tron account:', error);
-      throw error;
+      this.logger.error('Error creating/activating Tron account:', error);
+      throw new HttpException('Failed to create/activate TRON wallet', 500);
     }
   }
 
