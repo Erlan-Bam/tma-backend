@@ -83,7 +83,6 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       transform: true,
       exceptionFactory: (errors) => {
-        logger.error(errors);
         return new BadRequestException(errors);
       },
     }),
