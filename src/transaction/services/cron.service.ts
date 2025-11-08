@@ -27,7 +27,7 @@ export class TransactionCronService {
 
     this.isRunning = true;
     try {
-      const time = new Date(Date.now() - 10 * 60 * 60 * 1000);
+      const time = new Date(Date.now() - 30 * 60 * 1000);
 
       const wallets = await this.prisma.account.count({
         where: {
@@ -39,7 +39,7 @@ export class TransactionCronService {
       });
 
       this.logger.log(
-        `📊 Scheduling monitoring for ${wallets} active wallets (logged in within last 10 minutes)`,
+        `📊 Scheduling monitoring for ${wallets} active wallets (logged in within last 30 minutes)`,
       );
 
       if (wallets === 0) {
