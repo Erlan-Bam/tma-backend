@@ -106,7 +106,7 @@ export class TronService {
       const contract = await tronweb.contract().at(this.USDT_CONTRACT_ADDRESS);
       const balance = await contract.balanceOf(address).call({ from: address });
 
-      if (balance <= 10000) {
+      if (Number(balance) <= 10000) {
         return {
           success: false,
           message: 'No USDT balance to transfer',
@@ -122,13 +122,13 @@ export class TronService {
         });
 
       this.logger.log(
-        `USDT transfer successful: ${transaction} - Amount: ${balance / 1e6} USDT`,
+        `USDT transfer successful: ${transaction} - Amount: ${Number(balance) / 1e6} USDT`,
       );
 
       return {
         success: true,
         transaction,
-        balance: balance / 1e6,
+        balance: Number(balance) / 1e6,
         fromAddress: address,
         toAddress: this.MAIN_WALLET,
         message: 'USDT transferred successfully to main wallet',
