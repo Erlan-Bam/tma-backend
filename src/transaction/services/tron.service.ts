@@ -49,7 +49,10 @@ export class TransactionTronService {
       return transfers
         .filter(
           (t) =>
-            t.finalResult === 'SUCCESS' && t.confirmed === true && !t.revert,
+            t.finalResult === 'SUCCESS' &&
+            t.confirmed === true &&
+            !t.revert &&
+            t.to_address === address,
         )
         .map((transfer: TokenTransfer) => ({
           amount: this.convertTronAmountToReadable(
