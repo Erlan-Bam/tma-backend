@@ -166,12 +166,12 @@ You can now use your card for online payments worldwide! 🌍
               `Failed to send card creation notification to user with bot: ${botError}`,
             );
           }
-          return { success: true, message: 'Webhook processed' };
+          return 'success';
         } else {
           this.logger.log(
             `ℹ️ Card status is ${update.cardStatus} (${CARD_STATUS[update.cardStatus]}), no notification needed`,
           );
-          return { success: true, message: 'Webhook received' };
+          return 'success';
         }
       }
 
@@ -199,7 +199,7 @@ You can now use your card for online payments worldwide! 🌍
             update,
           );
 
-          return { success: true, message: 'Transaction webhook processed' };
+          return 'success';
         } catch (error) {
           this.logger.error(`Failed to process transaction webhook: ${error}`);
           throw error;
@@ -207,7 +207,7 @@ You can now use your card for online payments worldwide! 🌍
       }
 
       this.logger.log('📥 Received webhook update:', JSON.stringify(update));
-      return { success: true, message: 'Webhook processed' };
+      return 'success';
     } catch (error) {
       this.logger.error('Error processing webhook', error);
       throw error;
