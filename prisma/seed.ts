@@ -19,7 +19,7 @@ const tronService = new TronService(configService);
 
 async function main() {
   try {
-    await zephyrService.getToken();
+    console.log(await zephyrService.getToken());
   } catch (error) {
     console.error('❌ Error in main seed function:', error);
     throw error;
