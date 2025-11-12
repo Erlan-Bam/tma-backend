@@ -8,62 +8,18 @@ import * as crypto from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { ConfigService } from '@nestjs/config';
 import { TronService } from '../src/shared/services/tron.service';
+import { ZephyrService } from '../src/shared/services/zephyr.service';
 
 const prisma = new PrismaClient();
 
 // Initialize ConfigService and TronService
 const configService = new ConfigService();
+const zephyrService = new ZephyrService(configService);
 const tronService = new TronService(configService);
 
 async function main() {
   try {
-    console.log('🌱 Starting seed...');
-
-    // Generate new Tron account using TronService
-    console.log('📝 Generating Tron account using TronService...');
-    const account = await tronService.createAccount();
-
-    console.log('✅ Tron account generated:');
-    console.log('  Address (base58):', account.address.base58);
-    console.log('  Address (hex):', account.address.hex);
-    console.log('  Private Key:', account.privateKey);
-    console.log('  Public Key:', account.publicKey);
-
-    const telegramId = BigInt(6339940850);
-
-    console.log('📝 Updating user account in database...');
-
-    const userAccount = await prisma.account.update({
-      where: {
-        telegramId: telegramId,
-      },
-      data: {
-        address: {
-          base58: account.address.base58,
-          hex: account.address.hex,
-        },
-        privateKey: account.privateKey,
-        publicKey: account.publicKey,
-        isWalletValid: true,
-        updatedAt: new Date(),
-      },
-    });
-
-    console.log('✅ User account created/updated:');
-    console.log('  ID:', userAccount.id);
-    console.log('  Telegram ID:', userAccount.telegramId.toString());
-    console.log('  Email:', userAccount.email);
-    console.log('  Wallet Address:', (userAccount.address as any).base58);
-
-    console.log(
-      '\n✅ Seed finished successfully:',
-      '\n  Base58 Address:',
-      account.address.base58,
-      '\n  Private Key:',
-      account.privateKey,
-      '\n  Public Key:',
-      account.publicKey,
-    );
+    await zephyrService.getToken();
   } catch (error) {
     console.error('❌ Error in main seed function:', error);
     throw error;

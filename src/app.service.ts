@@ -73,9 +73,8 @@ You can now use your card for online payments worldwide! 🌍
           );
           return { success: true, message: 'Webhook received' };
         }
-      }
-
-      this.logger.log('📥 Received webhook update:', JSON.stringify(update));
+      } else if (update.tr)
+        this.logger.log('📥 Received webhook update:', JSON.stringify(update));
       return { success: true, message: 'Webhook processed' };
     } catch (error) {
       this.logger.error('Error processing webhook', error);

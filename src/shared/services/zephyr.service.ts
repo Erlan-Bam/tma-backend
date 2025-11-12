@@ -717,7 +717,7 @@ export class ZephyrService {
     }
   }
 
-  private async getToken(childUserId?: string | undefined): Promise<string> {
+  async getToken(childUserId?: string | undefined): Promise<string> {
     const payload: Record<string, any> = {
       secret: this.secretKey,
       timestamp: Date.now(),
