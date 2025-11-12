@@ -88,7 +88,7 @@ export interface ZephyrWebhook {
   transactionTime: string;
   txnStatus: 'SUCCESS' | 'FAILED';
   txnType: TxnType;
-  type: 'DECREASE' | 'INCREASE' | 'FREEZE' | 'UNFREEZE';
+  type: 'DECREASE' | 'INCREASE';
   relatedId: string;
   cardStatus?: 0 | 1 | 2 | 3 | 4 | 5;
 }

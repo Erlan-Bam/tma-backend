@@ -25,8 +25,6 @@ export class AppService {
     const emojiMap: Record<string, string> = {
       DECREASE: '💳',
       INCREASE: '💰',
-      FREEZE: '🔒',
-      UNFREEZE: '🔓',
     };
     return emojiMap[type] || '💼';
   }
