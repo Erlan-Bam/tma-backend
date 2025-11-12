@@ -38,3 +38,22 @@ export interface ZephyrTopupApplications {
   userId: string;
   userName: string;
 }
+
+export interface ZephyrWebhook {
+  userId: 'string';
+  cardId: 'string';
+  billNo: 'string';
+  currency: 'USD';
+  amount: number;
+  fee: number;
+  orderCurrency: string;
+  orderAmount: number;
+  merchant: string;
+  result: string;
+  transactionTime: string;
+  txnStatus: 'SUCCESS';
+  txnType: 'AUTH';
+  type: 'DECREASE';
+  relatedId: 'string';
+  cardStatus: 0;
+}
