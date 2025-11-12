@@ -8,6 +8,8 @@ import {
   createPrivateKey,
   privateEncrypt,
   randomUUID,
+  createHash,
+  createDecipheriv,
 } from 'crypto';
 import { GetTopupApplications } from 'src/account/dto/get-topup-applications.dto';
 import {
@@ -25,6 +27,7 @@ export class ZephyrService {
   private readonly logger = new Logger(ZephyrService.name);
   private readonly secretKey: string;
   private readonly licenseKey: string;
+  private readonly AES: Buffer;
   private zephyr: AxiosInstance;
 
   constructor(private configService: ConfigService) {
@@ -33,6 +36,9 @@ export class ZephyrService {
     this.secretKey = this.configService.getOrThrow('ZEPHYR_SECRET_KEY');
     this.licenseKey =
       this.configService.getOrThrow<string>('ZEPHYR_LICENSE_KEY');
+
+    this.AES = this.generateAESKey(this.secretKey);
+
     this.zephyr = axios.create({
       baseURL: baseURL,
       timeout: 5000,
@@ -245,7 +251,9 @@ export class ZephyrService {
       });
 
       if (response.code === 200) {
-        return { cvv: response.data };
+        const result = this.decrypt(response.data);
+        const [_, cvv] = result.split('-');
+        return { cvv: cvv };
       } else {
         this.logger.debug(
           `Getting card cvv resulted in operation not successful, response: ${JSON.stringify(response)}`,
@@ -267,7 +275,9 @@ export class ZephyrService {
       });
 
       if (response.code === 200) {
-        return { expiry: response.data };
+        const result = this.decrypt(response.data);
+        const [_, month, year] = result.split('-');
+        return { expiry: `${month}/${year}` };
       } else {
         this.logger.debug(
           `Getting card expiry resulted in operation not successful, response: ${JSON.stringify(response)}`,
@@ -888,6 +898,49 @@ export class ZephyrService {
         'Error from zephyr when updating user account: ' + error,
       );
       throw error;
+    }
+  }
+
+  /**
+   * Generate AES-128 decryption key from secret key using MD5 hash
+   * Following the steps from Zephyr API documentation:
+   * 1. Calculate MD5 Hash of the secret key
+   * 2. Convert to hex string
+   * 3. Generate AES key from the hexadecimal string
+   */
+  private generateAESKey(secretKey: string): Buffer {
+    const md5 = createHash('md5').update(secretKey, 'utf-8').digest();
+
+    const hex = md5.toString('hex');
+
+    const aesKey = Buffer.from(hex, 'hex');
+    return aesKey;
+  }
+
+  /**
+   * Decrypt encrypted data using AES-128 ECB mode with PKCS5 padding
+   * The encrypted content is in UUID-CCV format where CCV is the encrypted code
+   *
+   * @param content - The encrypted string (e.g., "76610824d8a81Naa914c5ca6b4ba-182")
+   * @returns The decrypted string
+   */
+  private decrypt(content: string): string {
+    try {
+      const encrypted = Buffer.from(content, 'base64');
+
+      const decipher = createDecipheriv('aes-128-ecb', this.AES, null);
+
+      decipher.setAutoPadding(true);
+
+      let decrypted = decipher.update(encrypted);
+      decrypted = Buffer.concat([decrypted, decipher.final()]);
+
+      const result = decrypted.toString('utf-8');
+
+      return result;
+    } catch (error) {
+      this.logger.error(`Error decrypting data: ${error}`);
+      throw new Error('Failed to decrypt data');
     }
   }
 }
