@@ -14,6 +14,7 @@ import { User } from 'src/shared/decorator/user.decorator';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UserGuard } from 'src/shared/guards/user.guard';
 import { TopupCardDto } from './dto/topup-card.dto';
+import { BindCardEmailDto } from './dto/bind-card-email.dto';
 
 @ApiTags('Card')
 @Controller('card')
@@ -25,6 +26,16 @@ export class CardController {
   @Post('application')
   async createCard(@Body() data: CreateCardDto, @User('id') userId: string) {
     return await this.cardService.createCard(userId, data);
+  }
+
+  @Post('bind/email')
+  async bindCardEmail(@User('id') userId: string, @Body() data: BindCardEmailDto) {
+    return await this.cardService.bindCardEmail(userId, data.cardId, data.email);
+  }
+
+  @Get('validate/email/:email')
+  async validateCardEmail(@User('id') userId: string, @Param('email') email: string) {
+    return await this.cardService.validateCardEmail(userId, email);
   }
 
   @Post('topup/:id')

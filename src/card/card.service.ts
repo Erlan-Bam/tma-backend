@@ -228,6 +228,98 @@ export class CardService {
     }
   }
 
+  async bindCardEmail(userId: string, cardId: string, email: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: userId },
+        select: { childUserId: true },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      if (!account.childUserId) {
+        throw new HttpException(
+          'Zephyr integration not available for this account',
+          400,
+        );
+      }
+
+      // Validate email before binding
+      this.logger.log(
+        `🔍 Validating email for cardId=${cardId}, userId=${userId}`,
+      );
+      const validation = await this.zephyr.validateCardEmail(
+        account.childUserId,
+        email,
+      );
+
+      if (!validation.isValid) {
+        this.logger.warn(`❌ Email validation failed: ${validation.message}`);
+        throw new HttpException('Email is not valid or already in use', 400);
+      }
+
+      this.logger.log(
+        `📧 Binding email for cardId=${cardId}, userId=${userId}`,
+      );
+
+      const response = await this.zephyr.bindCardEmail(
+        account.childUserId,
+        cardId,
+        email,
+      );
+
+      if (response.status === 'error') {
+        this.logger.warn(`❌ Zephyr error: ${response.message}`);
+        throw new HttpException(
+          response.message || 'Card email binding failed',
+          400,
+        );
+      }
+
+      return response;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        `Error when binding card email for userId=${userId}, cardId=${cardId}, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async validateCardEmail(userId: string, email: string) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: userId },
+        select: { childUserId: true },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      if (!account.childUserId) {
+        throw new HttpException(
+          'Zephyr integration not available for this account',
+          400,
+        );
+      }
+
+      return await this.zephyr.validateCardEmail(account.childUserId, email);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        `Error when validating card email for userId=${userId}, error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
   async topupCard(id: string, topupCardDto: TopupCardDto) {
     try {
       const account = await this.prisma.account.findUnique({

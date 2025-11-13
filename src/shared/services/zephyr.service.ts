@@ -509,6 +509,63 @@ export class ZephyrService {
     }
   }
 
+  async bindCardEmail(childUserId: string, cardId: string, email: string) {
+    try {
+      const response = await this.sendRequest({
+        childUserId: childUserId,
+        method: 'POST',
+        endpoint: `/open-api/child/card/bind/email`,
+        body: {
+          id: cardId,
+          email: email,
+        },
+      });
+
+      if (response.code === 200) {
+        return {
+          status: 'success',
+          message: 'Card email bound successfully',
+        };
+      } else {
+        this.logger.debug(
+          `Binding card email resulted in operation not successful, response: ${JSON.stringify(response)}`,
+        );
+        return { status: 'error', message: response.msg };
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when binding card email: ' + error);
+      throw error;
+    }
+  }
+
+  async validateCardEmail(childUserId: string, email: string) {
+    try {
+      const response = await this.sendRequest({
+        childUserId: childUserId,
+        method: 'GET',
+        endpoint: `/open-api/child/card/unique/email/validate`,
+        params: {
+          email: email,
+        },
+      });
+
+      if (response.code === 200) {
+        return {
+          isValid: response.data,
+          message: response.msg,
+        };
+      } else {
+        this.logger.debug(
+          `Validating card email resulted in operation not successful, response: ${JSON.stringify(response)}`,
+        );
+        return { isValid: false, message: response.msg };
+      }
+    } catch (error) {
+      this.logger.error('Error from zephyr when validating card email: ' + error);
+      throw error;
+    }
+  }
+
   async rejectTopupApplication(applicationId: string) {
     try {
       const response = await this.sendRequest({
