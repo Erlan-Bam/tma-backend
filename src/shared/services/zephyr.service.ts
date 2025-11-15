@@ -435,6 +435,7 @@ export class ZephyrService {
           usedScenes: data.usedScenes,
           organize: data.organize,
           cardArea: data.cardArea,
+          bindEmail: data.bindEmail,
         };
       } else {
         return {
@@ -561,7 +562,9 @@ export class ZephyrService {
         return { isValid: false, message: response.msg };
       }
     } catch (error) {
-      this.logger.error('Error from zephyr when validating card email: ' + error);
+      this.logger.error(
+        'Error from zephyr when validating card email: ' + error,
+      );
       throw error;
     }
   }
