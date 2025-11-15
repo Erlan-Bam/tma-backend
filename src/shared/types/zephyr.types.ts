@@ -19,25 +19,36 @@ export const CARD_STATUS = {
 export type CardStatus = (typeof CARD_STATUS)[keyof typeof CARD_STATUS];
 
 export const TXN_TYPES = {
-  CREATE_CARD: '💳 Card Application',
-  TOPUP: '💰 Card Recharge',
-  AUTH: '🔒 Transaction Authorization',
-  REVERSAL: '↩️ Authorization Reversal',
-  RETURN: '💸 Transaction Refund',
-  REFUND: '💸 Transaction Refund',
-  CARD_CANCEL: '🚫 Card Closure',
-  CHBACK: '🔄 Card Refund',
-  CLEARING: '✅ Trade Clearing',
-  SETTLED: '✅ Trade Clearing',
-  CARD_DESTROY: '🗑️ Card Closure',
-  RETURNC: '💱 Exchange Rate Difference Refund',
-  AUTHC: '💱 Exchange Rate Difference Deduction',
-  AUTHG: '💼 Transaction Fee',
-  AUTHD: '💼 Transaction Settlement Fee',
-  AUTHE: '💼 Micro-transaction Fee',
-  AUTHF: '💼 Cross-region/currency Transaction Fee',
-  AUTHH: '↩️ Refund Reversal',
-  UNKNOWN: '❓ Unknown Transaction',
+  // Card Activation and Top-up Transactions
+  CREATE_CARD: 'Card Activation',
+  TOPUP: 'Card Top-up',
+  CARD_CANCEL: 'Card Cancellation',
+  CHBACK: 'Card Top-up Refund',
+
+  // Main Types of Normal Card Transactions
+  AUTH: 'Transaction Authorization',
+  REVERSAL: 'Transaction Authorization Cancellation',
+  CLEARING: 'Transaction Settlement',
+  SETTLED: 'Transaction Settlement',
+
+  // Transaction Refunds
+  RETURN: 'Transaction Refund',
+  REFUND: 'Transaction Refund',
+
+  // Exchange Rate Related
+  RETURNC: 'Exchange Rate Difference Refund',
+  AUTHC: 'Exchange Rate Difference Deduction',
+
+  // Fee Related
+  AUTHG: 'Transaction Fee',
+  AUTHD: 'Settlement Fee',
+  AUTHE: 'Small Transaction Fee',
+  AUTHF: 'Cross-regional/Currency Transaction Fee',
+
+  // Other Types
+  CARD_DESTROY: 'Card Closure',
+  AUTHH: 'Refund Reversal',
+  UNKNOWN: 'Unknown Transaction',
 } as const;
 
 export type TxnType = keyof typeof TXN_TYPES;

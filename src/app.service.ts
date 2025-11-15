@@ -19,81 +19,85 @@ export class AppService {
   ) {}
 
   /**
-   * Get transaction emoji based on type
-   */
-  private getTransactionEmoji(type: string): string {
-    const emojiMap: Record<string, string> = {
-      DECREASE: '💳',
-      INCREASE: '💰',
-    };
-    return emojiMap[type] || '💼';
-  }
-
-  /**
-   * Format transaction amount for display
-   */
-  private formatAmount(
-    amount: number,
-    type: string,
-    currency: string = 'USD',
-  ): string {
-    const sign = type === 'DECREASE' ? '-' : '+';
-    return `${sign}${amount.toFixed(2)} ${currency}`;
-  }
-
-  /**
    * Send transaction notification to user
    */
   private async sendTransactionNotification(
     telegramId: string,
     transaction: ZephyrWebhook,
+    cardInfo?: any,
   ): Promise<void> {
     try {
       const txnLabel = TXN_TYPES[transaction.txnType] || TXN_TYPES.UNKNOWN;
-      const emoji = this.getTransactionEmoji(transaction.type);
-      const formattedAmount = this.formatAmount(
-        transaction.amount,
-        transaction.type,
-        transaction.currency,
-      );
-      const statusEmoji = transaction.txnStatus === 'SUCCESS' ? '✅' : '⚠️';
 
-      let message = `
-${emoji} *${txnLabel}*
+      // Determine status emoji and text
+      let statusText = '';
+      let statusEmoji = '';
 
-${statusEmoji} *Status:* ${transaction.txnStatus}
-💵 *Amount:* \`${formattedAmount}\`
-${transaction.fee > 0 ? `💼 *Fee:* ${transaction.fee.toFixed(2)} ${transaction.currency}\n` : ''}`;
-
-      // Add merchant info for AUTH transactions
-      if (transaction.txnType === 'AUTH' && transaction.merchant) {
-        message += `🏪 *Merchant:* ${transaction.merchant}\n`;
-      }
-
-      // Add order details if different currency
-      if (
-        transaction.orderCurrency &&
-        transaction.orderCurrency !== transaction.currency
+      if (transaction.txnType === 'AUTH') {
+        // For AUTH transactions, show PENDING status
+        statusText = 'PENDING';
+        statusEmoji = '🟡';
+      } else if (transaction.txnType === 'REVERSAL') {
+        // For REVERSAL, the frozen amount is returned
+        statusText = 'CANCELLED';
+        statusEmoji = '❌';
+      } else if (
+        transaction.txnType === 'CLEARING' ||
+        transaction.txnType === 'SETTLED'
       ) {
-        message += `\n*Order Details:*\n`;
-        message += `💱 *Original Amount:* ${transaction.orderAmount.toFixed(2)} ${transaction.orderCurrency}\n`;
+        // For settlement, actual deduction happens
+        statusText = 'APPROVED';
+        statusEmoji = '✅';
+      } else if (
+        transaction.txnType === 'RETURN' ||
+        transaction.txnType === 'REFUND'
+      ) {
+        // For refunds
+        statusText = 'CANCELLED';
+        statusEmoji = '❌';
+      } else if (transaction.txnType === 'TOPUP') {
+        // For top-ups - send immediate success message
+        let topupMessage = '';
+        if (transaction.txnStatus === 'SUCCESS') {
+          topupMessage = `✅ Card successfully topped up!\nCredited ${transaction.amount.toFixed(2)} ${transaction.currency} to your card`;
+        } else {
+          if (transaction.amount < cardInfo.minTopupAmount) {
+            topupMessage = `❌ Card top-up failed: Amount is below the minimum top-up limit of ${cardInfo.minTopupAmount.toFixed(2)} USD. Please try again with a higher amount.`;
+          } else {
+            topupMessage = `❌ Card top-up failed. Please try again later or contact support.`;
+          }
+        }
+        await this.botService.sendMessage(telegramId, topupMessage);
+        this.logger.log(`📨 Topup notification sent to user ${telegramId}`);
+      } else {
+        return; // Ignore other transaction types
       }
 
-      message += `\n📝 *Transaction ID:* \`${transaction.billNo}\``;
+      // Format amount with sign
+      const formattedAmount = `-${transaction.orderAmount} ${transaction.orderCurrency}`;
 
-      if (transaction.transactionTime) {
-        message += `\n🕒 *Time:* ${new Date(
-          transaction.transactionTime,
-        ).toLocaleString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })}`;
+      // Convert amount to USD if orderCurrency is provided
+      const usdAmount = `(-${transaction.amount} ${transaction.amount})`;
+
+      // Build the message in the format from the image
+      let message = `💳 *Card ${cardInfo?.cardNo}, ${cardInfo?.cardArea}, ${cardInfo?.organize}*\n`;
+      message += `${statusEmoji} ${statusText} ${formattedAmount} ${usdAmount}\n`;
+
+      // Add merchant info if available
+      if (transaction.merchant) {
+        message += `${transaction.merchant}\n`;
       }
 
-      message += `\n\nThank you for using Arctic Pay! 💎`;
+      // Add new balance if card info is available
+      if (cardInfo?.balance !== undefined) {
+        message += `New balance ${cardInfo.balance}\n`;
+      }
+
+      // Add available balance (same as new balance in most cases)
+      if (cardInfo?.balance !== undefined) {
+        message += `Available ${cardInfo.balance}`;
+      }
+
       message = message.trim();
 
       await this.botService.sendMessage(telegramId, message, {
@@ -185,7 +189,7 @@ You can now use your card for online payments worldwide! 🌍
           // Get account by userId from the webhook
           const account = await this.prisma.account.findUnique({
             where: { childUserId: update.userId },
-            select: { telegramId: true },
+            select: { telegramId: true, childUserId: true },
           });
 
           if (!account) {
@@ -193,10 +197,14 @@ You can now use your card for online payments worldwide! 🌍
             return { success: true, message: 'Account not found' };
           }
 
-          // Send transaction notification
+          // Fetch card info to get current balance and card details
+          let cardInfo = await this.zephyr.getWebhookCardInfo(update.cardId);
+
+          // Send transaction notification with card info
           await this.sendTransactionNotification(
             account.telegramId.toString(),
             update,
+            cardInfo,
           );
 
           return 'success';
