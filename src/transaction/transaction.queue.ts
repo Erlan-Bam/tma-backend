@@ -198,7 +198,7 @@ export class TransactionQueue {
                   status: 'success',
                   message: `Topup application ${app.id} matched successfully`,
                   transation: transaction,
-                  applications: applications,
+                  application: app,
                 };
               } catch (error) {
                 this.logger.error(
@@ -217,7 +217,7 @@ export class TransactionQueue {
             status: 'error',
             message: `No matching topup application found for account ${accountId}`,
             transation: null,
-            applications: applications,
+            application: null,
           };
         },
         {
@@ -227,7 +227,7 @@ export class TransactionQueue {
       );
 
       this.logger.log(
-        `✅ Successfully processed transaction for account ${accountId} - Created: ${JSON.stringify(result.transation)}, Applications: ${JSON.stringify(result.applications)}`,
+        `✅ Successfully processed transaction for account ${accountId} - Created: ${JSON.stringify(result.transation)}`,
       );
 
       //REFERRAL LOGIC HERE
@@ -249,11 +249,20 @@ export class TransactionQueue {
       }
 
       try {
-        await this.bot.sendSuccessfulTransactionMessage(
-          account.telegramId,
-          amount,
-          tronId,
-        );
+        if (result.application) {
+          await this.bot.sendSuccessfulTransactionMessage(
+            account.telegramId,
+            amount,
+            tronId,
+          );
+          const wallet = await this.zephyr.getAccountBalance(
+            account.childUserId,
+          );
+          await this.bot.sendMessage(
+            account.telegramId.toString(),
+            `Your new balance is: ${wallet.balance} USDT`,
+          );
+        }
       } catch (error) {
         this.logger.error(
           `❌ Error sending message to user ${account.telegramId} for transaction ${tronId}`,
