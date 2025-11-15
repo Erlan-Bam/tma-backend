@@ -19,7 +19,18 @@ const tronService = new TronService(configService);
 
 async function main() {
   try {
-    console.log(await zephyrService.getToken());
+    const account = await prisma.account.findUnique({
+      where: { id: '608bca6c-a57e-43c4-b8f9-0729cfb7bdeb' },
+    });
+    const { cards } = await zephyrService.getActiveCards(account.childUserId);
+    for (const card of cards) {
+      const info = await zephyrService.getCardInfo(
+        account.childUserId,
+        card.id,
+      );
+
+      console.log(JSON.stringify(info));
+    }
   } catch (error) {
     console.error('❌ Error in main seed function:', error);
     throw error;
