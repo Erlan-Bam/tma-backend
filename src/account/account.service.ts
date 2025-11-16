@@ -36,7 +36,12 @@ export class AccountService {
         data: { checkedAt: new Date() },
       });
 
-      const balance = await this.tron.getTRXBalance(address.base58);
+      let balance: number = 0;
+      try {
+        balance = await this.tron.getTRXBalance(address.base58);
+      } catch (error) {
+        throw new HttpException('Too many requests', 429);
+      }
       const isValid = balance >= this.MINIMUM_TRX_BALANCE;
       await this.prisma.account.update({
         where: { id: id },
