@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { readFile } from 'fs/promises';
@@ -50,25 +50,23 @@ export class ZephyrService {
 
   async getChildAccount(childUserId: string) {
     try {
-      const response = await this.sendRequest({
+      const general = await this.sendRequest({
         method: 'GET',
         endpoint: `/open-api/user/child/${childUserId}`,
       });
+      const account = await this.getAccountBalance(childUserId);
 
-      const data = response.data;
+      const data = general.data;
 
-      if (response.code === 200) {
+      if (general.code === 200) {
         return {
           childUserId: data.userId,
           topupMin: data.topupMin,
           topupMax: data.topupMax,
-          balance: data.balance,
+          balance: account.balance,
         };
       } else {
-        this.logger.debug(
-          `Getting child account resulted in operation not successful, response: ${response}`,
-        );
-        throw new Error('Operation not successful');
+        throw new HttpException('Try again later', 400);
       }
     } catch (error) {
       this.logger.error('Error from zephyr when getting child account' + error);
