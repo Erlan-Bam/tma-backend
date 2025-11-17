@@ -23,7 +23,7 @@ const jwtService = new JwtService();
 async function main() {
   try {
     const account = await prisma.account.findUnique({
-      where: { id: '608bca6c-a57e-43c4-b8f9-0729cfb7bdeb' },
+      where: { id: 'a8c319e4-425c-4cdb-82c4-cc3c9c815848' },
     });
 
     if (!account) {
