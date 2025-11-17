@@ -61,9 +61,9 @@ export class ZephyrService {
       if (general.code === 200) {
         return {
           childUserId: data.userId,
-          topupMin: data.topupMin,
-          topupMax: data.topupMax,
-          balance: account.balance,
+          topupMin: Number(data.topupMin),
+          topupMax: Number(data.topupMax),
+          balance: Number(account.balance),
         };
       } else {
         throw new HttpException('Try again later', 400);
@@ -83,7 +83,7 @@ export class ZephyrService {
 
       if (response.code === 200) {
         return {
-          balance: response.data.balance,
+          balance: Number(response.data.balance),
         };
       } else {
         this.logger.debug(
