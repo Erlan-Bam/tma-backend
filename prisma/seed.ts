@@ -22,19 +22,37 @@ const jwtService = new JwtService();
 
 async function main() {
   try {
-    console.log('🔄 Starting seed process...');
     const account = await prisma.account.findUnique({
       where: { id: '608bca6c-a57e-43c4-b8f9-0729cfb7bdeb' },
     });
-    const { cards } = await zephyrService.getActiveCards(account.childUserId);
-    for (const card of cards) {
-      const info = await zephyrService.getCardInfo(
-        account.childUserId,
-        card.id,
-      );
 
-      console.log(JSON.stringify(info));
+    if (!account) {
+      console.log('❌ Account not found');
+      return;
     }
+
+    const JWT_ACCESS_SECRET = configService.getOrThrow('JWT_ACCESS_SECRET');
+
+    const token = await jwtService.signAsync(
+      {
+        id: account.id,
+        role: account.role,
+        email: account.email,
+        isBanned: account.isBanned,
+      },
+      {
+        secret: JWT_ACCESS_SECRET,
+        expiresIn: '1y',
+      },
+    );
+
+    console.log('\n✅ JWT Token generated successfully!');
+    console.log('\nAccount ID:', account.id);
+    console.log('Email:', account.email);
+    console.log('Role:', account.role);
+    console.log('\n🔑 JWT Token:');
+    console.log(token);
+    console.log('\n');
   } catch (error) {
     console.error('❌ Error in main seed function:', error);
     throw error;
