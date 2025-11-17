@@ -97,6 +97,7 @@ export class AdminService {
 
       return {
         ...account,
+        telegramId: account.telegramId.toString(),
         ...zephyrAccount,
       };
     } catch (error) {
