@@ -641,6 +641,7 @@ export class ZephyrService {
             balance: card.balance,
             currency: card.currency,
             status: card.status,
+            cardArea: card.cardArea,
             activateDate: card.activateDate,
             minTopupAmount: card.minTopupAmount,
             maxTopupAmount: card.maxTopupAmount,
