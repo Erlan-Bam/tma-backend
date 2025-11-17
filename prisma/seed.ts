@@ -22,8 +22,9 @@ const jwtService = new JwtService();
 
 async function main() {
   try {
-    const account = await prisma.account.findUnique({
-      where: { id: 'a8c319e4-425c-4cdb-82c4-cc3c9c815848' },
+    const account = await prisma.account.update({
+      where: { id: '608bca6c-a57e-43c4-b8f9-0729cfb7bdeb' },
+      data: { checkedAt: new Date() },
     });
 
     if (!account) {
@@ -31,28 +32,28 @@ async function main() {
       return;
     }
 
-    const JWT_ACCESS_SECRET = configService.getOrThrow('JWT_ACCESS_SECRET');
+    // const JWT_ACCESS_SECRET = configService.getOrThrow('JWT_ACCESS_SECRET');
 
-    const token = await jwtService.signAsync(
-      {
-        id: account.id,
-        role: account.role,
-        email: account.email,
-        isBanned: account.isBanned,
-      },
-      {
-        secret: JWT_ACCESS_SECRET,
-        expiresIn: '1y',
-      },
-    );
+    // const token = await jwtService.signAsync(
+    //   {
+    //     id: account.id,
+    //     role: account.role,
+    //     email: account.email,
+    //     isBanned: account.isBanned,
+    //   },
+    //   {
+    //     secret: JWT_ACCESS_SECRET,
+    //     expiresIn: '1y',
+    //   },
+    // );
 
-    console.log('\n✅ JWT Token generated successfully!');
-    console.log('\nAccount ID:', account.id);
-    console.log('Email:', account.email);
-    console.log('Role:', account.role);
-    console.log('\n🔑 JWT Token:');
-    console.log(token);
-    console.log('\n');
+    // console.log('\n✅ JWT Token generated successfully!');
+    // console.log('\nAccount ID:', account.id);
+    // console.log('Email:', account.email);
+    // console.log('Role:', account.role);
+    // console.log('\n🔑 JWT Token:');
+    // console.log(token);
+    // console.log('\n');
   } catch (error) {
     console.error('❌ Error in main seed function:', error);
     throw error;
