@@ -6,7 +6,7 @@ export class UpdateCommissionDto {
   @ApiProperty({
     description: 'Type of commission',
     enum: CommissionType,
-    example: CommissionType.PERCENT,
+    example: CommissionType.PERCENTAGE,
   })
   @IsEnum(CommissionType)
   type: CommissionType;
