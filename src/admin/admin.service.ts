@@ -292,7 +292,7 @@ export class AdminService {
         totalTransactions: totalTransactions,
         totalCards: cards.total,
         totalAmount: amount._sum.amount,
-        zephyrFee: cards.total,
+        zephyrFee: cards.total * 2,
       };
     } catch (error) {
       this.logger.error(`Error when getting general stats, error: ${error}`);
