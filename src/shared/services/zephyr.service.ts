@@ -429,6 +429,7 @@ export class ZephyrService {
           balance: data.balance,
           currency: data.currency,
           status: data.status,
+          email: data.email,
           activateDate: data.activateDate,
           minTopupAmount: data.minTopupAmount,
           maxTopupAmount: data.maxTopupAmount,
