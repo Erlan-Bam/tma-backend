@@ -739,6 +739,7 @@ export class ZephyrService {
     headers?: Record<string, string>;
   }) {
     const token = await this.getToken(childUserId);
+    console.log('Token: ', token);
 
     const config: AxiosRequestConfig = {
       headers: {
@@ -887,6 +888,36 @@ export class ZephyrService {
       throw error;
     }
   }
+
+  // async getTransactions(query: GetZephyrTransactionsDto) {
+  //   try {
+  //     const response = await this.sendRequest({
+  //       method: 'GET',
+  //       endpoint: `/open-api/card/transaction`,
+  //       params: {
+  //         cardId: query.cardId,
+  //         pageNum: query.page,
+  //         pageSize: query.limit,
+  //         txnStatus: query.txnStatus,
+  //       },
+  //     });
+  //     if (response.code === 200) {
+  //       return {
+  //         transactions: response.rows,
+  //       };
+  //     } else {
+  //       this.logger.debug(
+  //         `Getting user transactions resulted in operation not successful for childUserId=${query.childUserId}, response: ${JSON.stringify(response)}`,
+  //       );
+  //       throw new Error('Operation not successful');
+  //     }
+  //   } catch (error) {
+  //     this.logger.error(
+  //       'Error from zephyr when getting user transactions' + error,
+  //     );
+  //     throw error;
+  //   }
+  // }
 
   async getUserTransactions(query: GetUserTransactionsDto) {
     try {

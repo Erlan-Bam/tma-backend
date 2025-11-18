@@ -34,6 +34,17 @@ export class AdminService {
     }
   }
 
+  // async getZephyrTransactions(query: GetZephyrTransactionsDto) {
+  //   try {
+  //     return await this.zephyr.getTransactions(query);
+  //   } catch (error) {
+  //     this.logger.error(
+  //       `Error when getting user transactions for childUserId=${query.childUserId}, error: ${error}`,
+  //     );
+  //     throw new HttpException('Something Went Wrong', 500);
+  //   }
+  // }
+
   async getUserTransactions(query: GetUserTransactionsDto) {
     try {
       return await this.zephyr.getUserTransactions(query);

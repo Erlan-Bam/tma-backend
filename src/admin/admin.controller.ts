@@ -56,6 +56,11 @@ export class AdminController {
     return await this.adminService.getAllCards();
   }
 
+  @Get('zephyr/transactions')
+  async getZephyrTransactions() {
+    // return await this.adminService.getZephyrTransactions();
+  }
+
   @Get('user/transactions')
   @ApiOperation({
     summary: 'Get user transactions',
