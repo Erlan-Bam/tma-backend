@@ -27,6 +27,7 @@ import { UpdateCommissionDto } from './dto/update-commision.dto';
 import { GetStatsDto } from './dto/get-stats.dto';
 import { PaginationDto } from 'src/shared/dto/pagination.dto';
 import { GetUserTransactionsDto } from './dto/get-user-transactions.dto';
+import { GetZephyrTransactionsDto } from './dto/get-zephyr-transactions.dto';
 import { TopupUserAccountDto } from './dto/topup-user-account.dto';
 import { TransferTrxToSubWalletDto } from './dto/transfer-trx-to-sub-wallet.dto';
 import { SetMaintenanceDto } from './dto/maintenance.dto';
@@ -57,8 +58,21 @@ export class AdminController {
   }
 
   @Get('zephyr/transactions')
-  async getZephyrTransactions() {
-    // return await this.adminService.getZephyrTransactions();
+  @ApiOperation({
+    summary: 'Get Zephyr transactions',
+    description:
+      'Retrieves transaction history from Zephyr system with optional filtering by type and status',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved Zephyr transactions',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error',
+  })
+  async getZephyrTransactions(@Query() query: GetZephyrTransactionsDto) {
+    return await this.adminService.getZephyrTransactions(query);
   }
 
   @Get('user/transactions')

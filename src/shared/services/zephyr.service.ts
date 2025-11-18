@@ -21,6 +21,7 @@ import {
 import { CreateCardDto } from 'src/card/dto/create-card.dto';
 import { TopupCardDto } from 'src/card/dto/topup-card.dto';
 import { GetUserTransactionsDto } from 'src/admin/dto/get-user-transactions.dto';
+import { GetZephyrTransactionsDto } from 'src/admin/dto/get-zephyr-transactions.dto';
 
 @Injectable()
 export class ZephyrService {
@@ -889,35 +890,35 @@ export class ZephyrService {
     }
   }
 
-  // async getTransactions(query: GetZephyrTransactionsDto) {
-  //   try {
-  //     const response = await this.sendRequest({
-  //       method: 'GET',
-  //       endpoint: `/open-api/card/transaction`,
-  //       params: {
-  //         cardId: query.cardId,
-  //         pageNum: query.page,
-  //         pageSize: query.limit,
-  //         txnStatus: query.txnStatus,
-  //       },
-  //     });
-  //     if (response.code === 200) {
-  //       return {
-  //         transactions: response.rows,
-  //       };
-  //     } else {
-  //       this.logger.debug(
-  //         `Getting user transactions resulted in operation not successful for childUserId=${query.childUserId}, response: ${JSON.stringify(response)}`,
-  //       );
-  //       throw new Error('Operation not successful');
-  //     }
-  //   } catch (error) {
-  //     this.logger.error(
-  //       'Error from zephyr when getting user transactions' + error,
-  //     );
-  //     throw error;
-  //   }
-  // }
+  async getTransactions(query: GetZephyrTransactionsDto) {
+    try {
+      const response = await this.sendRequest({
+        method: 'GET',
+        endpoint: `/open-api/card/transaction`,
+        params: {
+          type: query.type,
+          pageNum: query.page,
+          pageSize: query.limit,
+          txnStatus: query.txnStatus,
+        },
+      });
+      if (response.code === 200) {
+        return {
+          transactions: response.rows,
+        };
+      } else {
+        this.logger.debug(
+          `Getting user transactions resulted in operation not successful for zephyr transactions response: ${JSON.stringify(response)}`,
+        );
+        throw new Error('Operation not successful');
+      }
+    } catch (error) {
+      this.logger.error(
+        'Error from zephyr when getting user transactions' + error,
+      );
+      throw error;
+    }
+  }
 
   async getUserTransactions(query: GetUserTransactionsDto) {
     try {

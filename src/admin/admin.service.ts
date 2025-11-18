@@ -12,6 +12,7 @@ import { MaintenanceService } from 'src/shared/services/maintenance.service';
 import { GetUserTransactionsDto } from './dto/get-user-transactions.dto';
 import { TopupUserAccountDto } from './dto/topup-user-account.dto';
 import { PaginationDto } from 'src/shared/dto/pagination.dto';
+import { GetZephyrTransactionsDto } from './dto/get-zephyr-transactions.dto';
 
 @Injectable()
 export class AdminService {
@@ -34,16 +35,16 @@ export class AdminService {
     }
   }
 
-  // async getZephyrTransactions(query: GetZephyrTransactionsDto) {
-  //   try {
-  //     return await this.zephyr.getTransactions(query);
-  //   } catch (error) {
-  //     this.logger.error(
-  //       `Error when getting user transactions for childUserId=${query.childUserId}, error: ${error}`,
-  //     );
-  //     throw new HttpException('Something Went Wrong', 500);
-  //   }
-  // }
+  async getZephyrTransactions(query: GetZephyrTransactionsDto) {
+    try {
+      return await this.zephyr.getTransactions(query);
+    } catch (error) {
+      this.logger.error(
+        `Error when getting Zephyr transactions error: ${error}`,
+      );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
 
   async getUserTransactions(query: GetUserTransactionsDto) {
     try {
