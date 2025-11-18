@@ -17,6 +17,7 @@ async function bootstrap() {
       'https://tma-frontend-production-1702.up.railway.app',
       'https://miniapp.arcticpay.app',
       'https://admin-panel.arcticpay.app',
+      'https://arcticpay.app',
       'http://localhost:3000',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
