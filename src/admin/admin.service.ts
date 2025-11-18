@@ -372,6 +372,19 @@ export class AdminService {
     }
   }
 
+  async getCardFee() {
+    try {
+      const commission = await this.prisma.commission.findUnique({
+        where: { name: CommissionName.CARD_FEE },
+      });
+
+      return { commission };
+    } catch (error) {
+      this.logger.error(`Error when getting card fee, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
   async updateCardFee(data: UpdateCommissionDto) {
     try {
       const commission = await this.prisma.commission.upsert({
@@ -398,6 +411,19 @@ export class AdminService {
       return { commission };
     } catch (error) {
       this.logger.error(`Error when updating card fee, error: ${error}`);
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async getTransactionFee() {
+    try {
+      const commission = await this.prisma.commission.findUnique({
+        where: { name: CommissionName.TRANSACTION_FEE },
+      });
+
+      return { commission };
+    } catch (error) {
+      this.logger.error(`Error when getting transaction fee, error: ${error}`);
       throw new HttpException('Something Went Wrong', 500);
     }
   }

@@ -372,6 +372,23 @@ export class AdminController {
     return await this.adminService.getTronBalance(userId);
   }
 
+  @Get('card-fee')
+  @ApiOperation({
+    summary: 'Get card fee',
+    description: 'Retrieves the current card creation fee configuration',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Card fee retrieved successfully',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error',
+  })
+  async getCardFee() {
+    return await this.adminService.getCardFee();
+  }
+
   @Patch('card-fee')
   @ApiOperation({
     summary: 'Update card fee',
@@ -387,6 +404,23 @@ export class AdminController {
   })
   async updateCardFee(@Body() data: UpdateCommissionDto) {
     return await this.adminService.updateCardFee(data);
+  }
+
+  @Get('transaction-fee')
+  @ApiOperation({
+    summary: 'Get transaction fee',
+    description: 'Retrieves the current transaction fee configuration',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Transaction fee retrieved successfully',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error',
+  })
+  async getTransactionFee() {
+    return await this.adminService.getTransactionFee();
   }
 
   @Patch('transaction-fee')
