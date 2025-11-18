@@ -181,27 +181,27 @@ export class CardService {
         );
       }
 
-      const cardFee = await this.getCardFee();
-      if (!cardFee) {
-        throw new HttpException('Card fee not configured', 500);
-      }
+      // const cardFee = await this.getCardFee();
+      // if (!cardFee) {
+      //   throw new HttpException('Card fee not configured', 500);
+      // }
 
-      const processedAmount = this.processFee(
-        createCardDto.topupAmount,
-        cardFee,
-      );
+      // const processedAmount = this.processFee(
+      //   createCardDto.topupAmount,
+      //   cardFee,
+      // );
 
-      if (processedAmount <= 0) {
-        throw new HttpException(
-          `Amount must be greater than card fee (${cardFee.rate} ${cardFee.type === 'FIXED' ? 'USDT' : '%'})`,
-          400,
-        );
-      }
+      // if (processedAmount <= 0) {
+      //   throw new HttpException(
+      //     `Amount must be greater than card fee (${cardFee.rate} ${cardFee.type === 'FIXED' ? 'USDT' : '%'})`,
+      //     400,
+      //   );
+      // }
 
-      createCardDto.topupAmount = processedAmount;
-      this.logger.log(
-        `💳 Creating card for userId=${id} with topupAmount=${createCardDto.topupAmount}`,
-      );
+      // createCardDto.topupAmount = processedAmount;
+      // this.logger.log(
+      //   `💳 Creating card for userId=${id} with topupAmount=${createCardDto.topupAmount}`,
+      // );
 
       const response = await this.zephyr.createCard(
         account.childUserId,
