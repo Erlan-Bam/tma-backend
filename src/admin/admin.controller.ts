@@ -20,8 +20,9 @@ import {
   ApiQuery,
   ApiBody,
 } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from 'src/shared/guards/admin.guard';
+import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
+import { Public } from 'src/shared/decorator/public.decorator';
 import { UpdateCommissionDto } from './dto/update-commision.dto';
 import { GetStatsDto } from './dto/get-stats.dto';
 import { PaginationDto } from 'src/shared/dto/pagination.dto';
@@ -34,7 +35,7 @@ import { SetWebsiteTechWorkDto } from './dto/set-website-tech-work.dto';
 @Controller('admin')
 @ApiTags('Admin')
 @ApiBearerAuth('JWT')
-@UseGuards(AuthGuard('jwt'), AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminController {
   constructor(private adminService: AdminService) {}
 
@@ -406,6 +407,7 @@ export class AdminController {
   }
 
   @Get('maintenance/status')
+  @Public()
   @ApiOperation({
     summary: 'Get maintenance status',
     description: 'Retrieves the current maintenance mode status',
@@ -474,6 +476,7 @@ export class AdminController {
   }
 
   @Get('website-tech-work/status')
+  @Public()
   @ApiOperation({
     summary: 'Get website tech work status',
     description: 'Retrieves the current website technical work status',
