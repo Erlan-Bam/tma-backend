@@ -118,12 +118,12 @@ export class AppService {
   async handleWebhook(update: ZephyrWebhook) {
     try {
       // Handle card status webhooks
-      if (update.cardStatus !== undefined) {
+      if (update.txnType === 'CREATE_CARD') {
         this.logger.log(
           `🔔 Received card webhook - cardStatus: ${update.cardStatus} (${CARD_STATUS[update.cardStatus]}), cardId: ${update.cardId}`,
         );
 
-        if (update.cardStatus === 0 && update.txnType === 'CREATE_CARD') {
+        if (update.cardStatus === 0) {
           // Card is Active
           this.logger.log(
             `✅ Card is active, sending notification for cardId: ${update.cardId}`,
@@ -180,7 +180,7 @@ You can now use your card for online payments worldwide! 🌍
       }
 
       // Handle transaction webhooks
-      else if (update.txnType) {
+      if (update.txnType) {
         this.logger.log(
           `💼 Received transaction webhook - txnType: ${update.txnType}, status: ${update.txnStatus}, amount: ${update.amount} ${update.currency}`,
         );
