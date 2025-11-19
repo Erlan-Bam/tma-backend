@@ -44,11 +44,14 @@ export class AccountService {
       } catch (error) {
         throw new HttpException('Too many requests', 429);
       }
-      const isValid = balance >= this.MINIMUM_TRX_BALANCE;
-      await this.prisma.account.update({
-        where: { id: id },
-        data: { isWalletValid: isValid },
-      });
+      let isValid = account.isWalletValid;
+      if (!account.isWalletValid) {
+        isValid = balance >= this.MINIMUM_TRX_BALANCE;
+        await this.prisma.account.update({
+          where: { id: id },
+          data: { isWalletValid: isValid },
+        });
+      }
 
       return {
         currency: 'USDT',
