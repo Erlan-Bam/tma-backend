@@ -7,6 +7,7 @@ import { BotService } from 'src/shared/services/bot.service';
 import { ReferralBonus } from './types/add-referral-bonus.type';
 import { TronService } from 'src/shared/services/tron.service';
 import { GetUserTransactionsDto } from 'src/admin/dto/get-user-transactions.dto';
+import { GetAccountTransactionsDto } from './dto/get-account-transactions';
 
 @Injectable()
 export class AccountService {
@@ -121,7 +122,7 @@ export class AccountService {
     }
   }
 
-  async getAccountTransactions(id: string, query: GetUserTransactionsDto) {
+  async getAccountTransactions(id: string, query: GetAccountTransactionsDto) {
     try {
       const account = await this.prisma.account.findUnique({
         where: { id: id },
@@ -132,13 +133,9 @@ export class AccountService {
         throw new HttpException('Account not found', 404);
       }
 
-      const request = {
-        childUserId: account.childUserId,
-        ...query,
-      };
-      console.log('Request: ', request);
+      query.childUserId = account.childUserId;
 
-      return await this.zephyr.getUserTransactions(request);
+      return await this.zephyr.getUserTransactions(query);
     } catch (error) {
       if (error instanceof HttpException) throw error;
       this.logger.error(

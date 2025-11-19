@@ -6,6 +6,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { User } from 'src/shared/decorator/user.decorator';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { GetUserTransactionsDto } from 'src/admin/dto/get-user-transactions.dto';
+import { GetAccountTransactionsDto } from './dto/get-account-transactions';
 
 @Controller('account')
 @ApiBearerAuth('JWT')
@@ -31,7 +32,7 @@ export class AccountController {
   @Get('transactions')
   async getCardTransactions(
     @User('id') userId: string,
-    @Query() query: GetUserTransactionsDto,
+    @Query() query: GetAccountTransactionsDto,
   ) {
     return await this.accountService.getAccountTransactions(userId, query);
   }
