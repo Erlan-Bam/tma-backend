@@ -27,13 +27,19 @@ export class AppService {
     cardInfo?: any,
   ): Promise<void> {
     try {
-      const txnLabel = TXN_TYPES[transaction.txnType] || TXN_TYPES.UNKNOWN;
-
       // Determine status emoji and text
       let statusText = '';
       let statusEmoji = '';
 
-      if (transaction.txnType === 'AUTH') {
+      // Check if transaction failed or was declined first
+      const isFailed =
+        transaction.txnStatus === 'FAILED' || transaction.result === 'DECLINE';
+
+      if (isFailed) {
+        // For failed/declined transactions
+        statusText = 'DECLINED';
+        statusEmoji = '❌';
+      } else if (transaction.txnType === 'AUTH') {
         // For AUTH transactions, show PENDING status
         statusText = 'PENDING';
         statusEmoji = '🟡';
@@ -69,8 +75,13 @@ export class AppService {
         }
         await this.botService.sendMessage(telegramId, topupMessage);
         this.logger.log(`📨 Topup notification sent to user ${telegramId}`);
-      } else {
-        return; // Ignore other transaction types
+        return; // Return after sending topup notification
+      } else if (!isFailed) {
+        return;
+      }
+
+      if (!statusText) {
+        return;
       }
 
       // Format amount with sign
