@@ -25,7 +25,7 @@ export class AccountService {
     try {
       const account = await this.prisma.account.findUnique({
         where: { id: id },
-        select: { address: true, isWalletValid: true },
+        select: { address: true, isWalletValid: true, telegramId: true },
       });
 
       if (!account) {
@@ -51,6 +51,18 @@ export class AccountService {
           where: { id: id },
           data: { isWalletValid: isValid },
         });
+      }
+
+      if (balance >= this.MINIMUM_TRX_BALANCE) {
+        await this.prisma.account.update({
+          where: { id: id },
+          data: { isEnoughTrx: true },
+        });
+      } else {
+        await this.bot.sendMessage(
+          account.telegramId.toString(),
+          'Your TRX balance is below the minimum required. Please top up your wallet before sending USDT transactions.',
+        );
       }
 
       return {

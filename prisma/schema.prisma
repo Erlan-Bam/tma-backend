@@ -49,6 +49,8 @@ model Account {
   childUserId        String   @unique
   isBanned           Boolean  @default(false)
   isWalletValid      Boolean  @default(false)
+  isEnoughTrx        Boolean  @default(false)
+
   address            Json
   privateKey         String  @unique
   publicKey          String  @unique
