@@ -132,10 +132,13 @@ export class AccountService {
         throw new HttpException('Account not found', 404);
       }
 
-      return await this.zephyr.getUserTransactions({
+      const request = {
         childUserId: account.childUserId,
         ...query,
-      });
+      };
+      console.log('Request: ', request);
+
+      return await this.zephyr.getUserTransactions(request);
     } catch (error) {
       if (error instanceof HttpException) throw error;
       this.logger.error(
