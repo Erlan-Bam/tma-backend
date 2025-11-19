@@ -339,6 +339,10 @@ export class CardService {
         );
       }
 
+      if (topupCardDto.topupAmount < 10) {
+        throw new HttpException('Minimum top-up amount is 10 USD', 400);
+      }
+
       const response = await this.zephyr.topupCard(
         account.childUserId,
         topupCardDto,

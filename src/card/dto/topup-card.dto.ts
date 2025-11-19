@@ -7,6 +7,6 @@ export class TopupCardDto {
 
   @Type(() => Number)
   @IsInt()
-  @Min(1)
+  @Min(10)
   topupAmount: number;
 }
