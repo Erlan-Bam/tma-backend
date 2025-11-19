@@ -80,7 +80,7 @@ export class AppService {
       const usdAmount = `(-${transaction.amount} ${transaction.amount})`;
 
       // Build the message in the format from the image
-      let message = `💳 *Card ${cardInfo?.cardNo}, ${cardInfo?.cardArea}, ${cardInfo?.organize}*\n`;
+      let message = `💳 <b>Card ${cardInfo?.cardNo}, ${cardInfo?.cardArea}, ${cardInfo?.organize}</b>\n`;
       message += `${statusEmoji} ${statusText} ${formattedAmount} ${usdAmount}\n`;
 
       // Add merchant info if available
@@ -101,7 +101,7 @@ export class AppService {
       message = message.trim();
 
       await this.botService.sendMessage(telegramId, message, {
-        parse_mode: 'Markdown',
+        parse_mode: 'HTML',
       });
 
       this.logger.log(
@@ -138,12 +138,12 @@ export class AppService {
 
             if (card.status !== 'error') {
               const cardMessage = `
-💳 *Your ${card.organize} ${card.cardArea} ${card.cardNo}*
+💳 <b>Your ${card.organize} ${card.cardArea} ${card.cardNo}</b>
 Card Created Successfully!
 
 Your virtual card has been created and is ready to use.
 
-✅ *Status:* ${CARD_STATUS[0]}
+✅ <b>Status:</b> ${CARD_STATUS[0]}
 
 You can now use your card for online payments worldwide! 🌍
 
@@ -157,7 +157,7 @@ You can now use your card for online payments worldwide! 🌍
                 account.telegramId.toString(),
                 cardMessage,
                 {
-                  parse_mode: 'Markdown',
+                  parse_mode: 'HTML',
                 },
               );
 
