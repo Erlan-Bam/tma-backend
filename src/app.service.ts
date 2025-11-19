@@ -27,6 +27,8 @@ export class AppService {
     cardInfo?: any,
   ): Promise<void> {
     try {
+      const txnLabel = TXN_TYPES[transaction.txnType] || TXN_TYPES.UNKNOWN;
+
       // Determine status emoji and text
       let statusText = '';
       let statusEmoji = '';
@@ -77,6 +79,7 @@ export class AppService {
         this.logger.log(`📨 Topup notification sent to user ${telegramId}`);
         return; // Return after sending topup notification
       } else if (!isFailed) {
+        // For other transaction types that are not failed, ignore them unless they're handled above
         return;
       }
 
