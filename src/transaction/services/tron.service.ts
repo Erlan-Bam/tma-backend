@@ -40,10 +40,6 @@ export class TransactionTronService {
           end_timestamp: now,
         },
       });
-      this.logger.debug(
-        `Tron transactions response: ${JSON.stringify(response.data)}`,
-      );
-
       const transfers: TokenTransfer[] = response.data.token_transfers;
 
       return transfers
