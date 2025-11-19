@@ -6,7 +6,6 @@ import { TronAddress } from 'src/transaction/types/tron.types';
 import { BotService } from 'src/shared/services/bot.service';
 import { ReferralBonus } from './types/add-referral-bonus.type';
 import { TronService } from 'src/shared/services/tron.service';
-import { GetUserTransactionsDto } from 'src/admin/dto/get-user-transactions.dto';
 import { GetAccountTransactionsDto } from './dto/get-account-transactions';
 
 @Injectable()
@@ -59,6 +58,10 @@ export class AccountService {
           data: { isEnoughTrx: true },
         });
       } else {
+        await this.prisma.account.update({
+          where: { id: id },
+          data: { isEnoughTrx: false },
+        });
         await this.bot.sendMessage(
           account.telegramId.toString(),
           'Your TRX balance is below the minimum required. Please top up your wallet before sending USDT transactions.',

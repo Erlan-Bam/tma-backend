@@ -192,7 +192,7 @@ export class AdminService {
     try {
       const account = await this.prisma.account.findUnique({
         where: { id: userId },
-        select: { address: true, privateKey: true },
+        select: { address: true, privateKey: true, telegramId: true },
       });
 
       if (!account) {
@@ -204,6 +204,7 @@ export class AdminService {
       return await this.tron.transferUSDTToMainWallet({
         address: address.base58,
         privateKey: account.privateKey,
+        telegramId: account.telegramId.toString(),
       });
     } catch (error) {
       if (error instanceof HttpException) {
@@ -220,7 +221,7 @@ export class AdminService {
     try {
       const account = await this.prisma.account.findUnique({
         where: { id: userId },
-        select: { address: true, privateKey: true },
+        select: { address: true, privateKey: true, telegramId: true },
       });
 
       if (!account) {
@@ -232,6 +233,7 @@ export class AdminService {
       return await this.tron.transferTRXToMainWallet({
         address: address.base58,
         privateKey: account.privateKey,
+        telegramId: account.telegramId.toString(),
       });
     } catch (error) {
       if (error instanceof HttpException) {

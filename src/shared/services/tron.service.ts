@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 import { TronAccount } from '../../transaction/types/tron.types';
 import { TronWeb } from 'tronweb';
+import { BotService } from './bot.service';
+import { PrismaService } from './prisma.service';
 
 @Injectable()
 export class TronService {
@@ -15,7 +17,11 @@ export class TronService {
   private readonly MAIN_WALLET_PRIVATE_KEY: string;
   private tronweb: TronWeb;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private bot: BotService,
+    private prisma: PrismaService,
+  ) {
     this.TRON_API_KEY = this.configService.getOrThrow('TRON_API_KEY');
     this.TRON_WEB_API_KEY = this.configService.getOrThrow('TRON_WEB_API_KEY');
     this.MAIN_WALLET = this.configService.getOrThrow('TRON_WALLET_ADDRESS');
@@ -93,6 +99,7 @@ export class TronService {
   async transferUSDTToMainWallet(data: {
     address: string;
     privateKey: string;
+    telegramId: string;
   }) {
     try {
       const { address, privateKey } = data;
@@ -125,10 +132,24 @@ export class TronService {
         `USDT transfer successful: ${transaction} - Amount: ${Number(balance) / 1e6} USDT`,
       );
 
+      const newTrxBalance = (await tronweb.trx.getBalance(address)) / 1e6;
+
+      try {
+        await this.bot.sendMessage(
+          data.telegramId,
+          `Your new TRX balance is: ${newTrxBalance.toFixed(2)}`,
+        );
+      } catch (notifyError) {
+        this.logger.error(
+          `Failed to send TRX balance notification after USDT transfer: ${notifyError}`,
+        );
+      }
+
       return {
         success: true,
         transaction,
         balance: Number(balance) / 1e6,
+        trxBalance: newTrxBalance,
         fromAddress: address,
         toAddress: this.MAIN_WALLET,
         message: 'USDT transferred successfully to main wallet',
@@ -139,7 +160,11 @@ export class TronService {
     }
   }
 
-  async transferTRXToMainWallet(data: { address: string; privateKey: string }) {
+  async transferTRXToMainWallet(data: {
+    address: string;
+    privateKey: string;
+    telegramId: string;
+  }) {
     try {
       const { address, privateKey } = data;
 
@@ -169,10 +194,24 @@ export class TronService {
         `TRX transfer successful: ${tx.txid} - Amount: ${amount / 1e6} TRX`,
       );
 
+      const trxBalance = (await tronweb.trx.getBalance(address)) / 1e6;
+
+      try {
+        await this.bot.sendMessage(
+          data.telegramId,
+          `Your new TRX balance is: ${trxBalance.toFixed(2)}`,
+        );
+      } catch (notifyError) {
+        this.logger.error(
+          `Failed to send TRX balance notification after TRX transfer: ${notifyError}`,
+        );
+      }
+
       return {
         success: true,
         transaction: tx.txid,
         balanceSent: amount / 1e6,
+        remainingBalance: trxBalance,
         fromAddress: address,
         toAddress: this.MAIN_WALLET,
         message: 'TRX transferred successfully to main wallet',
