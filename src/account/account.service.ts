@@ -125,13 +125,17 @@ export class AccountService {
     try {
       const account = await this.prisma.account.findUnique({
         where: { id: id },
+        select: { childUserId: true },
       });
 
       if (!account) {
         throw new HttpException('Account not found', 404);
       }
 
-      return await this.zephyr.getUserTransactions(query);
+      return await this.zephyr.getUserTransactions({
+        childUserId: account.childUserId,
+        ...query,
+      });
     } catch (error) {
       if (error instanceof HttpException) throw error;
       this.logger.error(
