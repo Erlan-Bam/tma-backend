@@ -6,6 +6,7 @@ import { TronAddress } from 'src/transaction/types/tron.types';
 import { BotService } from 'src/shared/services/bot.service';
 import { ReferralBonus } from './types/add-referral-bonus.type';
 import { TronService } from 'src/shared/services/tron.service';
+import { GetUserTransactionsDto } from 'src/admin/dto/get-user-transactions.dto';
 
 @Injectable()
 export class AccountService {
@@ -116,6 +117,26 @@ export class AccountService {
     } catch (error) {
       if (error instanceof HttpException) throw error;
       this.logger.error('Error when getting account by telegram id: ' + error);
+      throw new HttpException('Something went wrong', 500);
+    }
+  }
+
+  async getAccountTransactions(id: string, query: GetUserTransactionsDto) {
+    try {
+      const account = await this.prisma.account.findUnique({
+        where: { id: id },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      return await this.zephyr.getUserTransactions(query);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error(
+        'Error when getting topup transactions by telegram id: ' + error,
+      );
       throw new HttpException('Something went wrong', 500);
     }
   }

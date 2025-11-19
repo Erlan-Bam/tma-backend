@@ -50,14 +50,6 @@ export class CardController {
     return await this.cardService.validateCardEmail(userId, email);
   }
 
-  @Get('transactions')
-  async getCardTransactions(
-    @User('id') userId: string,
-    @Query() query: GetUserTransactionsDto,
-  ) {
-    return await this.cardService.getCardTransactions(userId, query);
-  }
-
   @Post('topup')
   async topupCard(@User('id') userId: string, @Body() data: TopupCardDto) {
     return await this.cardService.topupCard(userId, data);

@@ -5,6 +5,7 @@ import { GetTopupApplications } from './dto/get-topup-applications.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from 'src/shared/decorator/user.decorator';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { GetUserTransactionsDto } from 'src/admin/dto/get-user-transactions.dto';
 
 @Controller('account')
 @ApiBearerAuth('JWT')
@@ -25,6 +26,14 @@ export class AccountController {
   @Get('balance')
   async getAccountBalance(@User('id') userId: string) {
     return await this.accountService.getAccountBalance(userId);
+  }
+
+  @Get('transactions')
+  async getCardTransactions(
+    @User('id') userId: string,
+    @Query() query: GetUserTransactionsDto,
+  ) {
+    return await this.accountService.getAccountTransactions(userId, query);
   }
 
   @Get('topup/applications')
