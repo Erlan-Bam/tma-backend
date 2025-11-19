@@ -5,6 +5,7 @@ import { BotService } from 'src/shared/services/bot.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { TopupCardDto } from './dto/topup-card.dto';
 import { CommissionName, Commission, CommissionType } from '@prisma/client';
+import { GetUserTransactionsDto } from 'src/admin/dto/get-user-transactions.dto';
 
 @Injectable()
 export class CardService {
@@ -356,6 +357,46 @@ export class CardService {
       this.logger.error(
         `Error when creating card for userId=${id}, error: ${error}`,
       );
+      throw new HttpException('Something Went Wrong', 500);
+    }
+  }
+
+  async getCardTransactions(userId: string, query: GetUserTransactionsDto) {
+    this.logger.log(
+      `🎯 Starting getCardTransactions request for userId: ${userId}, cardId: ${query.cardId}`,
+    );
+
+    try {
+      this.logger.debug(`🔍 Looking up account with id: ${userId}`);
+      const account = await this.prisma.account.findUnique({
+        where: { id: userId },
+        select: { childUserId: true },
+      });
+
+      if (!account) {
+        throw new HttpException('Account not found', 404);
+      }
+
+      this.logger.log(
+        `🚀 Calling Zephyr getUserTransactions with query: ${JSON.stringify(query)}`,
+      );
+
+      const cards = await this.zephyr.getUserTransactions(query);
+
+      this.logger.debug(`📋 Active cards data: ${JSON.stringify(cards)}`);
+
+      return cards;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        this.logger.error(
+          `💥 HTTP Exception in getCardTransactions for userId=${userId}: ${error.message} (status: ${error.getStatus()})`,
+        );
+        throw error;
+      }
+      this.logger.error(
+        `💥 Unexpected error in getCardTransactions for userId=${userId}, error: ${error}`,
+      );
+      this.logger.error(`🔍 Error stack: ${error.stack}`);
       throw new HttpException('Something Went Wrong', 500);
     }
   }

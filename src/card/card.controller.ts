@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { CardService } from './card.service';
@@ -15,6 +16,7 @@ import { CreateCardDto } from './dto/create-card.dto';
 import { UserGuard } from 'src/shared/guards/user.guard';
 import { TopupCardDto } from './dto/topup-card.dto';
 import { BindCardEmailDto } from './dto/bind-card-email.dto';
+import { GetUserTransactionsDto } from 'src/admin/dto/get-user-transactions.dto';
 
 @ApiTags('Card')
 @Controller('card')
@@ -29,16 +31,34 @@ export class CardController {
   }
 
   @Post('bind/email')
-  async bindCardEmail(@User('id') userId: string, @Body() data: BindCardEmailDto) {
-    return await this.cardService.bindCardEmail(userId, data.cardId, data.email);
+  async bindCardEmail(
+    @User('id') userId: string,
+    @Body() data: BindCardEmailDto,
+  ) {
+    return await this.cardService.bindCardEmail(
+      userId,
+      data.cardId,
+      data.email,
+    );
   }
 
   @Get('validate/email/:email')
-  async validateCardEmail(@User('id') userId: string, @Param('email') email: string) {
+  async validateCardEmail(
+    @User('id') userId: string,
+    @Param('email') email: string,
+  ) {
     return await this.cardService.validateCardEmail(userId, email);
   }
 
-  @Post('topup/:id')
+  @Get('transactions')
+  async getCardTransactions(
+    @User('id') userId: string,
+    @Query() query: GetUserTransactionsDto,
+  ) {
+    return await this.cardService.getCardTransactions(userId, query);
+  }
+
+  @Post('topup')
   async topupCard(@User('id') userId: string, @Body() data: TopupCardDto) {
     return await this.cardService.topupCard(userId, data);
   }
