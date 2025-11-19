@@ -17,7 +17,7 @@ const prisma = new PrismaClient();
 // Initialize ConfigService and TronService
 const configService = new ConfigService();
 const zephyrService = new ZephyrService(configService);
-const tronService = new TronService(configService);
+// const tronService = new TronService(configService);
 const jwtService = new JwtService();
 
 async function main() {
