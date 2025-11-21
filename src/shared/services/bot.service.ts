@@ -53,8 +53,7 @@ We're working hard to improve our services and will be back online shortly.
 Thank you for your patience! 🙏
 
 For urgent matters, contact support:
-💬 @arcticpay_support_bot
-      `.trim();
+💬 @arcticpay\\_support\\_bot`.trim();
 
       await ctx.reply(maintenanceMessage, {
         parse_mode: 'Markdown',
