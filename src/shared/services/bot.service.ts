@@ -14,6 +14,7 @@ import * as path from 'path';
 export class BotService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(BotService.name);
   private bot: Bot;
+  private gif: Buffer;
 
   constructor(
     private configService: ConfigService,
@@ -26,6 +27,14 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       const e = err.error as Error;
       this.logger.error('grammY error', e);
     });
+
+    const gifPath = path.join(process.cwd(), 'static', 'start.mp4');
+    try {
+      this.gif = require('fs').readFileSync(gifPath);
+      this.logger.log('Start GIF loaded into memory');
+    } catch (error) {
+      this.logger.error('Failed to load start GIF', error as Error);
+    }
 
     this.setup();
   }
@@ -97,9 +106,7 @@ Welcome to Arctic Pay, a new way to manage your finances! 💎
         .url('📖 FAQ', 'https://arcticpay.app/faq');
 
       try {
-        const gif = path.join(process.cwd(), 'static', 'start.mp4');
-
-        await ctx.replyWithAnimation(new InputFile(gif), {
+        await ctx.replyWithAnimation(new InputFile(this.gif, 'start.mp4'), {
           caption: welcomeMessage,
           reply_markup: keyboard,
           parse_mode: 'Markdown',
@@ -169,8 +176,7 @@ Arctic Pay staff will never ask for your passwords or private keys in DMs.
       const supportKeyboard = new InlineKeyboard()
         .url('💬 Chat with Support', 'https://t.me/arcticpay_support_bot')
         .row()
-        .url('📖 FAQ', 'https://arcticpay.app/faq')
-        .url('📧 Email Support', 'mailto:support@arcticpay.io');
+        .url('📖 FAQ', 'https://arcticpay.app/faq');
 
       await ctx.reply(supportMessage, {
         reply_markup: supportKeyboard,
