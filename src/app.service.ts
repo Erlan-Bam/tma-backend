@@ -91,7 +91,7 @@ export class AppService {
       const formattedAmount = `-${transaction.orderAmount} ${transaction.orderCurrency}`;
 
       // Convert amount to USD if orderCurrency is provided
-      const usdAmount = `(-${transaction.amount} ${transaction.amount})`;
+      const usdAmount = `(-${transaction.amount} ${transaction.currency})`;
 
       // Build the message in the format from the image
       let message = `💳 <b>Card ${cardInfo?.cardNo}, ${cardInfo?.cardArea}, ${cardInfo?.organize}</b>\n`;

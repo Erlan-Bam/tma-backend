@@ -6,8 +6,9 @@ import {
   OnModuleDestroy,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Bot, InlineKeyboard } from 'grammy';
+import { Bot, InlineKeyboard, InputFile } from 'grammy';
 import { MaintenanceService } from './maintenance.service';
+import * as path from 'path';
 
 @Injectable()
 export class BotService implements OnModuleInit, OnModuleDestroy {
@@ -95,10 +96,24 @@ Welcome to Arctic Pay, a new way to manage your finances! 💎
         .url('📞 Support', 'https://t.me/arcticpay_support_bot')
         .url('📖 FAQ', 'https://arcticpay.app/faq');
 
-      await ctx.reply(welcomeMessage, {
-        reply_markup: keyboard,
-        parse_mode: 'Markdown',
-      });
+      try {
+        const gif = path.join(process.cwd(), 'static', 'start.mp4');
+
+        await ctx.replyWithAnimation(new InputFile(gif), {
+          caption: welcomeMessage,
+          reply_markup: keyboard,
+          parse_mode: 'Markdown',
+        });
+      } catch (error) {
+        this.logger.error(
+          'Failed to send animation, falling back to text',
+          error as Error,
+        );
+        await ctx.reply(welcomeMessage, {
+          reply_markup: keyboard,
+          parse_mode: 'Markdown',
+        });
+      }
 
       this.logger.log(
         `New user started bot: ${firstName} (ID: ${user?.id})${username ? ` ${username}` : ''}${referralCode ? ` [Referred by: ${referralCode}]` : ''}`,
